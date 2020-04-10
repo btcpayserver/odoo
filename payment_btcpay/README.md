@@ -3,6 +3,7 @@
 
 ## This is the module to connect Odoo 9.0 and BTCPay
 This module allow you to create an easily way to accept cryptocurrencies.
+![BTCPay](/payment_btcpay/static/description/Btcpay_com.png)
   
 ## Configure Payment Acquirer
 * Install BTCPay Module -> Website -> eCommerce -> Payment Acquirers -> BTCPay
@@ -15,7 +16,14 @@ This module allow you to create an easily way to accept cryptocurrencies.
 * If you have a Private Key you can write here otherwise system will get when you safe the Payment Acquirer
 * Remember to Publish On Website
 
-![Payment Acquirer](/static/description/BTCPayPaymentAcquirer.png)
+![Payment Acquirer](/payment_btcpay/static/description/BTCPayPaymentAcquirer.png)
+
+## How it looks like?
+
+In payment webpage where payment methods appear, you will find new payment method called BTCPay. If you click on it you will be redirect to the server that you indicate in location field.
+
+![Payment Acquirer](/payment_btcpay/static/description/BTCPayLooksLike.png)
+
 
 ## Transaction BTCPay Details
 In transaction object, you will find more technical information about this method of payment:
@@ -24,4 +32,4 @@ In transaction object, you will find more technical information about this metho
 * Transaction Status: That indicates state of transaction
 * Buyer Mail Notification: Indicates if mail has been sent or if not (it will be in blank)
 
-![Transaction Btcpay Details](/static/description/BtcpayTxDetails.png)
+![Transaction Btcpay Details](/payment_btcpay/static/description/BtcpayTxDetails.png)
