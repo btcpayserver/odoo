@@ -28,7 +28,7 @@
     'category': 'Website',
     'version': '9.0',
     'license': 'GPL-3',
-    'price':'50',
+    'price':'100',
     'application': True,
     'depends': ['base', 'payment'],
     'data': [
