@@ -56,20 +56,21 @@ class AcquirerBtcPay(models.Model):
 
 
     def create(self, cr, uid, values, context=None):
-        if not values.get('privateKey'):
+        if values.get('provider') == 'btcpay' and not values.get('privateKey'):
             values['privateKey'] = bku.generate_privkey()
         return super(AcquirerBtcPay, self).create(cr, uid, values, context=context)
 
     @api.onchange('pairingCode')
     def _onchange_pairingCode(self):
-        if not self.token:
+        if not self.token and self.provider == 'btcpay':
             client = BTCPayClient(host=self.location, pem=self.privateKey)
             token = client.pair_client(self.pairingCode)
             self.token = token.get(self.facade)
 
     @api.onchange('token')
     def _onchange_token(self):
-        self.pairingCode = ''
+        if self.provider == 'btcpay':
+            self.pairingCode = ''
 
 
 class BtcPayTransaction(models.Model):
