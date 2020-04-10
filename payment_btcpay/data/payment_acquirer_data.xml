@@ -1,0 +1,36 @@
+<!--******************************************************************************
+# PAYMENT BTCPAY FOR ODOO
+# 
+# Copyright (C) 2020 Susanna Fort <susannafm@gmail.com>
+#
+#******************************************************************************
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# For a full copy of the GNU General Public License see the LICENSE.txt file.
+# 
+#******************************************************************************-->
+
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+        <record id="payment_acquirer_btcpay" model="payment.acquirer">
+            <field name="name">Btcpay</field>
+            <field name="image" type="base64" file="payment_btcpay/static/description/icon.png"/>
+            <field name="provider">btcpay</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="view_template_id" ref="btcpay_acquirer_form"/>
+            <field name="environment">test</field>
+            <field name="pre_msg"><![CDATA[
+            <p>You will be redirected to BTCPay website after clicking on the payment button.</p>]]></field>
+        </record>
+    </data>
+</openerp>

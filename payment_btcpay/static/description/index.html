@@ -1,0 +1,89 @@
+<html xmlns="http://www.w3.org/1999/html">
+<body>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">BTCPay Gateway</h2>
+        <h3 class="oe_slogan">This is the module to connect Odoo 9.0 and Btcpay</h3>
+        <div class="oe_span6">
+            <div class="oe_bg_img">
+                <img src="Btcpay_com.png" class="oe_picture oe_screenshot">
+            </div>
+        </div>
+        <div class="oe_span6">
+            <p class='oe_mt32'>
+            This module allow you to create an easily way to accept Bitcoins.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Configure Payment Acquirer</h2>
+        <div class="oe_span6">
+            <p class='oe_mt32'>
+                <ul>
+                    <li>Install BTCPay Module -> Website -> eCommerce -> Payment Acquirers -> BTCPay</li>
+                    <li>Put your facace. Best option is 'merchant'.</li>
+                    <li>Put the location as test or live url. Test example url: https://testnet.demo.btcpayserver.org</li>
+                    <li>Put the Confirmation URL where BTCpay will return after payment.</li>
+                    <li>Check if you want that Odoo send an email to your buyer after transaction is "Confirmed"</li>
+                    <li>Put your "Pairing Code" if you want that system get the "Token", after that "Pairing Code" will be deleted and the "Token" will appear in the corresponding field. You must safe the changes in order that this happens. NOTE: if you want to get new "Token" throw new "Pairing Code", please remove the "Token" field. Keep in mind that "Token" field must be in blank if you want to get throw the API.</li>
+                    <li>Put your "Token" if you have it and don't want to use Pairing Code to get it.  Remember, if you want to get throw API please don't write anything here.</li>
+                    <li>If you have a Private Key you can write here otherwise system will get when you safe the Payment Acquirer </li>
+                    <li>Remember to Publish On Website</li>
+                </ul>
+            </p>
+        </div>
+        <div class="oe_span6">
+            <div class="oe_bg_img">
+                <img src="BTCPayPaymentAcquirer.png" class="oe_picture oe_screenshot">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">How it looks like?</h2>  
+        <div class="oe_span6">
+            <div class="oe_bg_img">
+                <img src="BTCPayLooksLike.png" class="oe_picture oe_screenshot">
+            </div>
+        </div>
+        <div class="oe_span6">
+            <p class='oe_mt32'>
+                <ul>
+                    In payment webpage where payment methods appear, you will find new payment method called BTCPay.
+                    If you click on it you will be redirect to the server that you indicate in location field.
+                </ul>
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Transaction BTCPay Details</h2>  
+        <div class="oe_span6">
+            <p class='oe_mt32'>
+                <ul>
+                    In transaction object, you will find more technical information about this method of payment:
+                    <li>Transaction Id: cryptocurrency transaction hash for the executed payout.</li>
+                    <li>Invoice Id: the id of the invoice for which you want to fetch an event token</li>
+                    <li>Transaction Status: That indicates state of transaction</li>
+                    <li>Buyer Mail Notification: Indicates if mail has been sent or if not (it will be in blank)</li>
+                </ul>
+            </p>
+        </div>
+        <div class="oe_span6">
+            <div class="oe_bg_img">
+                <img src="BtcpayTxDetails.png" class="oe_picture oe_screenshot">
+            </div>
+        </div>
+    </div>
+</section>
+
+</body>
+</html>
