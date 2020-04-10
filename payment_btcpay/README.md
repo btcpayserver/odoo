@@ -18,6 +18,13 @@ This module allow you to create an easily way to accept cryptocurrencies.
 
 ![Payment Acquirer](/payment_btcpay/static/description/BTCPayPaymentAcquirer.png)
 
+## How it looks like?
+
+In payment webpage where payment methods appear, you will find new payment method called BTCPay. If you click on it you will be redirect to the server that you indicate in location field.
+
+![Payment Acquirer](/payment_btcpay/static/description/BTCPayLooksLike.png)
+
+
 ## Transaction BTCPay Details
 In transaction object, you will find more technical information about this method of payment:
 * Transaction Id: cryptocurrency transaction hash for the executed payout
