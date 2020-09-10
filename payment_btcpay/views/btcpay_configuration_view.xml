@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!--******************************************************************************
 # PAYMENT BTCPAY FOR ODOO
 # 
@@ -19,8 +20,6 @@
 # 
 #******************************************************************************-->
 
-
-<?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
         <record id="acquirer_form_btcpay" model="ir.ui.view">
