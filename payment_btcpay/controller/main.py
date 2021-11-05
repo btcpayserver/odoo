@@ -45,22 +45,23 @@ _logger = logging.getLogger(__name__)
 class BtcpayController(http.Controller):
     _notify_url = '/payment/btcpay/ipn'
 
-
-    @http.route('/payment/btcpay/ipn', type='json', auth='none')
+    @http.route('/payment/btcpay/ipn', type='json', auth='public', methods=['POST'], csrf=False)
     def btcpay_ipn(self, **post):
         """ BTCPay IPN. """
+        _logger.info('IPN!!!')
         cr, uid, context, env = request.cr, SUPERUSER_ID, request.context, request.env
-        acquirer = request.env['payment.acquirer'].search([('provider', '=', 'btcpay')])
+        acquirer = env['payment.acquirer'].search([('provider', '=', 'btcpay')])
         try:
-            #_logger.info('REQUEST JSONREQUEST %s',pprint.pformat(request.jsonrequest))
+            #_logger.info('IPN3!!!%s',pprint.pformat(request.jsonrequest['data']['id']))
             invoiceId = request.jsonrequest['data']['id']
-            client = BTCPayClient(host=acquirer.location, pem=acquirer.privateKey, tokens=acquirer.token)                
+            _logger.info('Invoice ID: %s', invoiceId)
+            client = BTCPayClient(host=acquirer.location, pem=acquirer.privateKey, tokens=acquirer.token)
             self.invoice = client.get_invoice(invoiceId)
             #_logger.info('SELF INVOICE IPN %s',pprint.pformat(self.invoice))
-       
+
             tx = None
             if self.invoice['orderId']:
-                tx_ids = request.registry['payment.transaction'].search(cr, uid, [('reference', '=', self.invoice['orderId'])], context=context)
+                tx_ids = request.registry['payment.transaction'].search(cr, uid, [('reference', '=', self.invoice['orderId'])], context=contex
                 if tx_ids:
                     tx = request.registry['payment.transaction'].browse(cr, uid, tx_ids[0], context=context)
 

@@ -58,4 +58,4 @@ fetched_invoice = client.get_invoice(new_invoice['id'])
 print("FETCHED INVOICE: ", new_invoice['id'])
 
 
-curl --no-keepalive --raw --show-error --verbose --connect-timeout 10 --insecure --max-redirs 1 -H "Content-Type: application/json" -d '{"data": "{"id":"P38S4ewSvvLoRrBSoEiMTz"}"}" http://odoo-dev.zynthian.org/payment/btcpay/ipn
+curl --no-keepalive --raw --show-error --verbose --connect-timeout 10 --insecure --max-redirs 1 -H "Content-Type: application/json" -d '{"data": "{"id":"8vQMp1C6gB1DxUyJB9gcBp"}"}" http://odoo-dev.zynthian.org/payment/btcpay/ipn
