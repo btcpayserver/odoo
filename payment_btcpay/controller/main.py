@@ -55,13 +55,13 @@ class BtcpayController(http.Controller):
             #_logger.info('IPN3!!!%s',pprint.pformat(request.jsonrequest['data']['id']))
             invoiceId = request.jsonrequest['data']['id']
             _logger.info('Invoice ID: %s', invoiceId)
-            client = BTCPayClient(host=acquirer.location, pem=acquirer.privateKey, tokens=acquirer.token)
+            client = BTCPayClient(host=acquirer.location, pem=acquirer.privateKey, tokens=acquirer.token)                
             self.invoice = client.get_invoice(invoiceId)
             #_logger.info('SELF INVOICE IPN %s',pprint.pformat(self.invoice))
-
+       
             tx = None
             if self.invoice['orderId']:
-                tx_ids = request.registry['payment.transaction'].search(cr, uid, [('reference', '=', self.invoice['orderId'])], context=contex
+                tx_ids = request.registry['payment.transaction'].search(cr, uid, [('reference', '=', self.invoice['orderId'])], context=context)
                 if tx_ids:
                     tx = request.registry['payment.transaction'].browse(cr, uid, tx_ids[0], context=context)
 
@@ -80,6 +80,7 @@ class BtcpayController(http.Controller):
         except:
             pass
         return ''
+
 
     @http.route(['/btcpay/checkout'], type='http', auth='none', csrf=None, website=True)
     def checkout(self, **post):
