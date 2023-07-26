@@ -23,14 +23,14 @@
 <openerp>
     <data noupdate="1">
         <record id="payment_acquirer_btcpay" model="payment.acquirer">
-            <field name="name">Btcpay</field>
+            <field name="name">BTCPay</field>
             <field name="image" type="base64" file="payment_btcpay/static/description/icon.png"/>
-            <field name="provider">btcpay</field>
+            <field name="provider">BTCPay</field>
             <field name="company_id" ref="base.main_company"/>
             <field name="view_template_id" ref="btcpay_acquirer_form"/>
             <field name="environment">test</field>
             <field name="pre_msg"><![CDATA[
-            <p>You will be redirected to BTCPay website after clicking on the payment button.</p>]]></field>
+            <p><br>You will be redirected to BTCPay website after clicking on the payment button.</p>]]></field>
         </record>
     </data>
 </openerp>
