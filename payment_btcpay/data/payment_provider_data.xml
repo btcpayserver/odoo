@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="payment_provider_btcpay" model="payment.provider">
+        <field name="name">BTCPay</field>
+        <field name="code">btcpay</field>
+        <field name="image_128" type="base64" file="payment_btcpay/static/description/icon.png"/>
+        <field name="module_id" ref="base.module_payment_btcpay"/>
+
+        <field name="redirect_form_view_id" ref="redirect_form"/>
+    </record>
+</odoo>
