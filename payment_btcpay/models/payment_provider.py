@@ -24,8 +24,8 @@ class PaymentProvider(models.Model):
 
     def create(self, values_list):
 
-        if values_list[0]['code'] == 'btcpay':
-            values_list[0]['btcpay_privateKey'] = crypto.generate_privkey()
+        if self.code == 'btcpay':
+            values_list['btcpay_privateKey'] = crypto.generate_privkey()
 
         return super(PaymentProvider, self).create(values_list)
 
