@@ -14,8 +14,7 @@ class PaymentProvider(models.Model):
         selection_add=[('btcpay', "BTCPay")], ondelete={'btcpay': 'set default'})
 
     btcpay_location = fields.Char(string='Location', size=64, default='https://btcpay.evolus.net')
-    btcpay_confirmationURL = fields.Char(string='Confirmation URL', help='Confirmation URL to return after Btcpay payment', default='http://odoo-dev.zynthian.org/shop/confirmation')
-    btcpay_buyerNotification = fields.Boolean(string='Odoo confirmation mail to buyer', help='If it is checked, Odoo will send the confirmation mail defined', default=True)
+    btcpay_confirmationURL = fields.Char(string='Confirmation URL', help='Confirmation URL to return after Btcpay payment', default='http://yourdomain/shop/confirmation')
 
     btcpay_token = fields.Char(string='Token', help='Access Token to BTCPay')
     btcpay_privateKey = fields.Text(string='Private Key', help='Private Key for BTCPay Client')
