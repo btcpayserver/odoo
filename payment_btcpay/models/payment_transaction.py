@@ -6,7 +6,6 @@ from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
 from odoo.addons.payment import utils as payment_utils
-from ..controllers.main import BTCPayController
 
 _logger = logging.getLogger(__name__)
 
@@ -18,9 +17,11 @@ class PaymentTransaction(models.Model):
     btcpay_txid = fields.Char("Transaction Id")
     btcpay_status = fields.Char("Transaction Status")
     api_url = '/btcpay/checkout'
+    checkout_url = '/btcpay/checkout'
+    notify_url = 'payment/btcpay/ipn'
 
     def _get_specific_rendering_values(self, processing_values):
-        """ Override of payment to return Paypal-specific rendering values.
+        """ Override of payment to return Specific rendering values.
 
         Note: self.ensure_one() from `_get_processing_values`
 
@@ -35,7 +36,7 @@ class PaymentTransaction(models.Model):
             return res
 
         base_url = self.provider_id.get_base_url()
-        _logger.info('Hola! API URL: %s', base_url)
+        _logger.info('Hola! API URL: %s', processing_values)
         partner_first_name, partner_last_name = payment_utils.split_partner_name(self.partner_name)
 
         return {
@@ -52,8 +53,8 @@ class PaymentTransaction(models.Model):
             'lc': self.partner_lang,
             'state': self.partner_state_id.name,
             'zip_code': self.partner_zip,
-            'api_url':  BTCPayController._checkout_url,
-            'notify_url': base_url + BTCPayController._notify_url,
+            'api_url':  self.checkout_url,
+            'notify_url': base_url + self.notify_url,
         }
 
     def _get_tx_from_notification_data(self, provider_code, notification_data):

@@ -33,7 +33,7 @@ from odoo.http import request
 from odoo.tools import html_escape
 
 import json
-from btcpay import BTCPayClient
+from ..models.libs.client import BTCPayClient
 
 
 _logger = logging.getLogger(__name__)
@@ -71,7 +71,6 @@ class BTCPayController(http.Controller):
 
     @http.route('/payment/btcpay/ipn', type='json', auth='public', csrf=False)
     def btcpay_ipn(self, **post):
-
         """ BTCPay IPN. """
         _logger.info('BTCPAY IPN RECEIVED... ')
         data = json.loads(request.httprequest.data)

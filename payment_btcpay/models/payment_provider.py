@@ -1,8 +1,8 @@
 import logging
 
 from odoo import _, api, fields, models
-from btcpay import BTCPayClient
-from btcpay import crypto
+from .libs.client import BTCPayClient
+from .libs import crypto
 
 _logger = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ class PaymentProvider(models.Model):
     code = fields.Selection(
         selection_add=[('btcpay', "BTCPay")], ondelete={'btcpay': 'set default'})
 
-    btcpay_location = fields.Char(string='Location', size=64, default='https://btcpay.evolus.net')
+    btcpay_location = fields.Char(string='Location', size=64, default='https://testnet.demo.btcpayserver.org')
     btcpay_confirmationURL = fields.Char(string='Confirmation URL', help='Confirmation URL to return after Btcpay payment', default='http://yourdomain/shop/confirmation')
 
     btcpay_token = fields.Char(string='Token', help='Access Token to BTCPay')
@@ -22,9 +22,8 @@ class PaymentProvider(models.Model):
     btcpay_pairingCode = fields.Char(string='Pairing Code', help='Create paring Code in your BTCPay server and put here')
 
     def create(self, values_list):
-
         if self.code == 'btcpay':
-            values_list['btcpay_privateKey'] = crypto.generate_privkey()
+            values_list['btcpay_privateKey'] = crypto.generate_privakey()
 
         return super(PaymentProvider, self).create(values_list)
 
