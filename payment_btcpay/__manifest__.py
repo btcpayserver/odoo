@@ -39,7 +39,9 @@
         'views/payment_transaction_views.xml',
         'data/payment_provider_data.xml',
     ],
-
+    'external_dependencies': {
+        'python': ['btcpay-python']
+    },
     'post_init_hook': 'post_init_hook',
     'uninstall_hook': 'uninstall_hook',
 }
