@@ -1,28 +1,40 @@
 # payment_btcpay
-# Gateway to BTCPay for Odoo 16.0
+# BTCPay Server payment gateway for Odoo 16.0
 
 ## This is the module to connect Odoo 16.0 and BTCPay
-This module allow you to create an easily way to accept cryptocurrencies.
+This module allows you to accept bitcoin (and other cryptocurrency) payments in your Odoo e-commerce store.  
 ![BTCPay](/payment_btcpay/static/description/Btcpay_com.png)
-  
-## Configure Payment Acquirer
-* Install BTCPay Module -> Website -> eCommerce -> Payment Acquirers -> BTCPay
-* Put your facace. Best option is 'merchant'.
-* Put the location as test or live url. Test example url: https://testnet.demo.btcpayserver.org
-* Put the Confirmation URL where BTCpay will return after payment.
-* Check if you want that Odoo send an email to your buyer after transaction is "Confirmed"
-* Put your "Pairing Code" if you want that system get the "Token", after that "Pairing Code" will be deleted and the "Token" will appear in the corresponding field. You must safe the changes in order that this happens. NOTE: if you want to get new "Token" throw new "Pairing Code", please remove the "Token" field. Keep in mind that "Token" field must be in blank if you want to get throw the API.
-* Put your "Token" if you have it and don't want to use Pairing Code to get it.  Remember, if you want to get throw API please don't write anything here.
-* If you have a Private Key you can write here otherwise system will get when you safe the Payment Acquirer
-* Remember to Publish On Website
 
-![Payment Acquirer](/payment_btcpay/static/description/BTCPayPaymentAcquirer.png)
+## Install the module
+* Clone our [repository](https://github.com/btcpayserver/odoo) or download the .zip from the [releases page](https://github.com/btcpayserver/odoo/releases
+* Place the `payment_btcpay` directory in your Odoo addons directory
+* Install dependencies by running `pip install -r requirements.txt`
+* Restart Odoo
+* Go to Apps -> Update Apps List
+* Remove the "Apps" filter and search for "btcpay"
+* Click **Activate** button
+  
+## Configure BTCPay as payment provider
+* Go to  **Website** -> **Configuration** -> **Payment Providers**
+* Search for BTCPay and click on button **Activate**
+
+* State, set to enabled
+* Put the location as test or live url. Test example url: https://testnet.demo.btcpayserver.org
+* Put the Confirmation URL where BTCPay will return after payment.
+* Fields Token and Private key, leave empty
+* Field Facade, keep default 'merchant'.
+* * Check if you want that Odoo send an email to your buyer after transaction is "Confirmed"
+* Put your "Pairing Code" if you want that system get the "Token", after that "Pairing Code" will be deleted and the "Token" will appear in the corresponding field. You must safe the changes in order that this happens. NOTE: if you want to get new "Token" throw new "Pairing Code", please remove the "Token" field. Keep in mind that "Token" field must be in blank if you want to get throw the API.
+* After you wrote the pairing code the Token and Private key will be filled automatically if the pairing was successful
+
+
+![Payment Provider](/payment_btcpay/static/description/BTCPayPaymentProvider.png)
 
 ## How it looks like?
 
 In payment webpage where payment methods appear, you will find new payment method called BTCPay. If you click on it you will be redirect to the server that you indicate in location field.
 
-![Payment Acquirer](/payment_btcpay/static/description/BTCPayLooksLike.png)
+![Payment Provider](/payment_btcpay/static/description/BTCPayLooksLike.png)
 
 
 ## Transaction BTCPay Details
