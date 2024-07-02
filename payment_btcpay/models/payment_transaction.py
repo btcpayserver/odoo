@@ -105,7 +105,7 @@ class PaymentTransaction(models.Model):
         if self.provider_code != 'btcpay':
             return
 
-        #_logger.info("_process_notification_data %s", pprint.pformat(notification_data))
+        _logger.info("_process_notification_data %s", pprint.pformat(notification_data))
         txn_id = notification_data.get('reference')
         if not all(txn_id):
             raise ValidationError(
