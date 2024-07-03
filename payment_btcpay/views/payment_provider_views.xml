@@ -10,11 +10,12 @@
                 <group attrs="{'invisible': [('code', '!=', 'btcpay')]}">
                     <field name="btcpay_location"/>
                     <field name="btcpay_confirmationURL"/>
-
+                    <field name="btcpay_pairingCode"/>
+                </group>
+                <group attrs="{'invisible': [('code', '!=', 'btcpay')]}">
                     <field name="btcpay_token"/>
                     <field name="btcpay_privateKey"/>
                     <field name="btcpay_facade"/>
-                    <field name="btcpay_pairingCode"/>
                 </group>
             </group>
         </field>

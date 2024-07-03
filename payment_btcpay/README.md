@@ -1,28 +1,49 @@
 # payment_btcpay
-# Gateway to BTCPay for Odoo 16.0
+# BTCPay Server payment gateway for Odoo 16.0
 
 ## This is the module to connect Odoo 16.0 and BTCPay
-This module allow you to create an easily way to accept cryptocurrencies.
-![BTCPay](/payment_btcpay/static/description/Btcpay_com.png)
+This module allows you to accept bitcoin (and other cryptocurrency) payments in your Odoo e-commerce store.  
+![BTCPay Server Website](../payment_btcpay/static/description/BTCPayServer_org.png)
+
+## Install the module
+* Clone our [repository](https://github.com/btcpayserver/odoo) or download the .zip from the [releases page](https://github.com/btcpayserver/odoo/releases
+* Place the `payment_btcpay` directory in your Odoo addons directory
+* Install dependencies by running `pip install -r requirements.txt` (from inside the `payment_btcpay` directory)
+* Restart Odoo
+* Go to Apps -> Update Apps List
+* Remove the "Apps" filter and search for "btcpay"
+* Click **Activate** button
   
-## Configure Payment Acquirer
-* Install BTCPay Module -> Website -> eCommerce -> Payment Acquirers -> BTCPay
-* Put your facace. Best option is 'merchant'.
-* Put the location as test or live url. Test example url: https://testnet.demo.btcpayserver.org
-* Put the Confirmation URL where BTCpay will return after payment.
-* Check if you want that Odoo send an email to your buyer after transaction is "Confirmed"
-* Put your "Pairing Code" if you want that system get the "Token", after that "Pairing Code" will be deleted and the "Token" will appear in the corresponding field. You must safe the changes in order that this happens. NOTE: if you want to get new "Token" throw new "Pairing Code", please remove the "Token" field. Keep in mind that "Token" field must be in blank if you want to get throw the API.
-* Put your "Token" if you have it and don't want to use Pairing Code to get it.  Remember, if you want to get throw API please don't write anything here.
-* If you have a Private Key you can write here otherwise system will get when you safe the Payment Acquirer
-* Remember to Publish On Website
+## Configure BTCPay as payment provider
+* Go to  **Website** -> **Configuration** -> **Payment Providers**
+* Search for BTCPay and click on button **Activate**
 
-![Payment Acquirer](/payment_btcpay/static/description/BTCPayPaymentAcquirer.png)
+In the BTCPay settings form, tab "Credentials":
+* Set field "State" to enabled
+* Set field "BTCPay Server URL" as test or live URL including https://. Example URL: https://testnet.demo.btcpayserver.org
+* Set field "Confirmation URL" where the customer will return after payment
+* Get a pairing code from your BTCPay Server store: Settings -> Access Tokens
+  * Click on "Create Token" button
+  * Label: enter e.g. "My odoo store"
+  * Public Key: leave empty
+  * Click on "Request Pairing" button, on next page click "Approve" button
+  * At the top copy the code next to "Server initiated pairing code", e.g. "hg7z8wN"
+* Back in Odoo, paste the code into "Pairing Code" field
+* Hit Tab key on your keyboard (or click on another field) and the pairing process will start automatically
+* When the pairing is successful the "Token" and "Private Key" field will be filled automatically
+* Field Facade, keep default 'merchant'.
 
-## How it looks like?
+On the tab "Configuration":
+* Set field "Payment Journal" to "Bank", you can click the dropdown and click on the suggestion "Bank"
+* Now you can **save** the settings
 
-In payment webpage where payment methods appear, you will find new payment method called BTCPay. If you click on it you will be redirect to the server that you indicate in location field.
+![Payment Provider Settings](../payment_btcpay/static/description/BTCPayPaymentSettings.png)
 
-![Payment Acquirer](/payment_btcpay/static/description/BTCPayLooksLike.png)
+## How does the payment page look?
+
+During the checkout the customers will have the option to select the payment method "Pay with Bitcoin / Lightning Network". After selecting they will be redirected to the BTCPay checkout page as shown below.
+
+![Payment Provider](../payment_btcpay/static/description/BTCPayLooksLike.png)
 
 
 ## Transaction BTCPay Details
@@ -31,4 +52,4 @@ In transaction object, you will find more technical information about this metho
 * Invoice Id: the id of the invoice for which you want to fetch an event token
 * Transaction Status: That indicates state of transaction
 
-![Transaction Btcpay Details](/payment_btcpay/static/description/BtcpayTxDetails.png)
+![Transaction Btcpay Details](../payment_btcpay/static/description/BtcpayTxDetails.png)

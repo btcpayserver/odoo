@@ -41,9 +41,9 @@ _logger = logging.getLogger(__name__)
 
 class BTCPayController(http.Controller):
     _checkout_url = '/btcpay/checkout'
-    _notify_url = 'payment/btcpay/ipn'
+    _notify_url = '/payment/btcpay/ipn'
 
-    @http.route(_checkout_url, type='http',  auth='public', csrf=False, webiste=True)
+    @http.route(_checkout_url, type='http',  auth='public', csrf=False, website=True)
     def checkout(self, **data):
 
         _logger.info("CHECKOUT: notification received from BTCPay with data:\n%s", pprint.pformat(data))
@@ -69,7 +69,7 @@ class BTCPayController(http.Controller):
         _logger.info('Invoice %s \n NOTIFY URL: %s', invoice, notificationURL)
         return werkzeug.utils.redirect(invoice['url'])
 
-    @http.route('/payment/btcpay/ipn', type='json', auth='public', csrf=False)
+    @http.route(_notify_url, type='json', auth='public', csrf=False)
     def btcpay_ipn(self, **post):
         """ BTCPay IPN. """
         _logger.info('BTCPAY IPN RECEIVED... ')
@@ -95,5 +95,5 @@ class BTCPayController(http.Controller):
             # Handle the notification data
             tx_sudo._handle_notification_data('btcpay', notification_data)
         except ValidationError:  # Acknowledge the notification to avoid getting spammed
-            _logger.exception("unable to handle the notification data; skipping to acknowledge")
+            _logger.exception("Unable to handle the notification data; skipping to acknowledge")
         return ''
