@@ -1,7 +1,7 @@
 # payment_btcpay
-# BTCPay Server payment gateway for Odoo 16.0
+# BTCPay Server payment gateway for Odoo 17.0
 
-## This is the module to connect Odoo 16.0 and BTCPay
+## This is the module to connect Odoo 17.0 and BTCPay
 This module allows you to accept bitcoin (and other cryptocurrency) payments in your Odoo e-commerce store.  
 ![BTCPay Server Website](../payment_btcpay/static/description/BTCPayServer_org.png)
 
@@ -34,8 +34,14 @@ In the BTCPay settings form, tab "Credentials":
 * Field Facade, keep default 'merchant'.
 
 On the tab "Configuration":
-* Set field "Payment Journal" to "Bank", you can click the dropdown and click on the suggestion "Bank"
+* Make sure field "Payment Journal" is set to "Bank", otherwise you can click the dropdown and click on the suggestion "Bank"
 * Now you can **save** the settings
+
+Check the payment method is enabled:
+* Go to  **Website** -> **Configuration** -> **Payment Methods**
+* Make sure "Pay with Bitcoin / Lightning Network" is active
+
+Congrats, all done. Do some testing to be sure all works.
 
 ![Payment Provider Settings](../payment_btcpay/static/description/BTCPayPaymentSettings.png)
 
