@@ -42,6 +42,7 @@ _logger = logging.getLogger(__name__)
 class BTCPayController(http.Controller):
     _checkout_url = '/btcpay/checkout'
     _notify_url = '/payment/btcpay/ipn'
+    _return_url = '/payment/btcpay/return'
 
     @http.route(_checkout_url, type='http',  auth='public', csrf=False, website=True)
     def checkout(self, **data):
@@ -49,15 +50,17 @@ class BTCPayController(http.Controller):
         _logger.info("CHECKOUT: notification received from BTCPay with data:\n%s", pprint.pformat(data))
         tx_sudo = request.env['payment.transaction'].sudo()._get_tx_from_notification_data('btcpay', data)
         provider = tx_sudo.provider_id
-        notificationURL = str(data.get('notify_url')).replace("http://", "https://")
+        notification_url = str(data.get('notify_url')).replace("http://", "https://")
+        base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        redirect_url = urls.url_join(base_url, self._return_url)
         client = BTCPayClient(host=provider.btcpay_location, pem=provider.btcpay_privateKey, tokens={provider.btcpay_facade: provider.btcpay_token})
         invoice = client.create_invoice(
             {"price": data.get('amount'),
              "currency": data.get('currency_id'),
              "orderId": data.get('reference'),
              "token": provider.btcpay_token,
-             "redirectURL": provider.btcpay_confirmationURL,
-             "notificationURL": notificationURL,
+             "redirectURL": redirect_url,
+             "notificationURL": notification_url,
              "extendedNotifications": True,
              "buyer": {"email": data.get('email'),
                        "name": data.get('name'),
@@ -66,7 +69,7 @@ class BTCPayController(http.Controller):
                        "postalCode": data.get('zip'),
                        "country": data.get('country'),
                        "notify": False}})
-        _logger.info('Invoice %s \n NOTIFY URL: %s', invoice, notificationURL)
+        _logger.info('Invoice %s \n NOTIFY URL: %s', invoice, notification_url)
         return werkzeug.utils.redirect(invoice['url'])
 
     @http.route(_notify_url, type='json', auth='public', csrf=False)
@@ -97,3 +100,13 @@ class BTCPayController(http.Controller):
         except ValidationError:  # Acknowledge the notification to avoid getting spammed
             _logger.exception("Unable to handle the notification data; skipping to acknowledge")
         return ''
+
+    @http.route(_return_url, type='http', auth="public", methods=['GET'], crsf=False, save_session=False)
+    def btcpay_return_from_redirect(self, **data):
+        """ BTCPay return
+
+            We could process and check the invoice status here but there is no need to as the status get's updated via
+            IPN anyway, so just show the user the order confirmation / payment status page.
+        """
+        _logger.info("BTCPay: user returned to shop after payment")
+        return request.redirect('/payment/status')
