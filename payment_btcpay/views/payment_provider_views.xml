@@ -9,7 +9,6 @@
             <group name="provider_credentials" position='inside'>
                 <group invisible="code != 'btcpay'">
                     <field name="btcpay_location"/>
-                    <field name="btcpay_confirmationURL"/>
                     <field name="btcpay_pairingCode"/>
                 </group>
                 <group invisible="code != 'btcpay'">
