@@ -6,7 +6,7 @@ This module allows you to accept bitcoin (and other cryptocurrency) payments in 
 ![BTCPay Server Website](../payment_btcpay/static/description/BTCPayServer_org.png)
 
 ## Install the module
-* Clone our [repository](https://github.com/btcpayserver/odoo) or download the .zip from the [releases page](https://github.com/btcpayserver/odoo/releases
+* Clone our [repository](https://github.com/btcpayserver/odoo) or download the .zip from the [releases page](https://github.com/btcpayserver/odoo/releases)
 * Place the `payment_btcpay` directory in your Odoo addons directory
 * Install dependencies by running `pip install -r requirements.txt` (from inside the `payment_btcpay` directory)
 * Restart Odoo
