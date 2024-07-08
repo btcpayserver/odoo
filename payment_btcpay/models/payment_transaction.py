@@ -115,15 +115,15 @@ class PaymentTransaction(models.Model):
         self.btcpay_txid = notification_data.get('txid')
         self.btcpay_status = notification_data.get('status')
 
-        if self.btcpay_status in ['paid']:
+        if self.btcpay_status in ['paid','processing']:
             self._set_pending(state_message=notification_data.get('pending_reason'))
-        elif self.btcpay_status in ['confirmed']:
+        elif self.btcpay_status in ['confirmed', 'complete']:
             self._set_done()
             confirmed_orders = self._check_amount_and_confirm_order()
             confirmed_orders._send_order_confirmation_mail()
         elif self.btcpay_status in ['new']:
             self.btcpay_invoiceId = notification_data.get('invoiceID')
-        elif self.btcpay_status in ['cancel']:
+        elif self.btcpay_status in ['cancel','cancelled']:
             self._set_canceled()
         elif self.btcpay_status in ['invalid']:
             _logger.info(
