@@ -21,7 +21,6 @@ This module allows you to accept bitcoin (and other cryptocurrency) payments in 
 In the BTCPay settings form, tab "Credentials":
 * Set field "State" to enabled
 * Set field "BTCPay Server URL" as test or live URL including https://. Example URL: https://testnet.demo.btcpayserver.org
-* Set field "Confirmation URL" where the customer will return after payment
 * Get a pairing code from your BTCPay Server store: Settings -> Access Tokens
   * Click on "Create Token" button
   * Label: enter e.g. "My odoo store"
