@@ -4,6 +4,10 @@
 This module allows you to accept bitcoin (and other cryptocurrency) payments in your Odoo e-commerce store.  
 ![BTCPay Server Website](../payment_btcpay/static/description/BTCPayServer_org.png)
 
+:::tip
+If you use Odoo 16 you can find the documentation [here](https://github.com/btcpayserver/odoo/blob/16.0/payment_btcpay/README.md).
+:::
+
 ## Install the module
 * Clone our [repository](https://github.com/btcpayserver/odoo) or download the .zip from the [releases page](https://github.com/btcpayserver/odoo/releases)
 * Make sure you are on branch `17.0` or downloaded a release tagged with version v17.x
