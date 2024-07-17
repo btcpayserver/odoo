@@ -2,7 +2,7 @@
 
 ## Accept bitcoin payments on Odoo 16 and 17
 This odoo addon allows you to accept bitcoin and Lightning Network (and other cryptocurrency) payments in your Odoo e-commerce store.  
-![BTCPay Server Website](https://raw.githubusercontent.com/btcpayserver/odoo/17.0/payment_btcpay/static/description/BTCPayServer_org.png)
+![BTCPay Server Banner](https://raw.githubusercontent.com/btcpayserver/odoo/17.0/payment_btcpay/static/description/BTCPay-Odoo-17-featured.png)
 
 ## How to install
 
