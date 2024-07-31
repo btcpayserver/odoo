@@ -25,7 +25,7 @@
     'author': 'Vandekul',
     'website': 'https://github.com/btcpayserver/odoo',
     'category': 'Accounting/Payment Providers',
-    'version': '17.0.1.0',
+    'version': '17.0.1.1',
     'license': 'GPL-3',
     'application': False,
     'installable': True,
