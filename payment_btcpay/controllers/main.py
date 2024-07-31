@@ -62,7 +62,7 @@ class BTCPayController(http.Controller):
              "redirectURL": redirect_url,
              "notificationURL": notification_url,
              "extendedNotifications": True,
-             "buyer": {"email": data.get('email'),
+             "buyer": {"email": data.get('email') or 'noemailavailable@example.com',
                        "name": data.get('name'),
                        "address1": data.get('street'),
                        "locality": data.get('city'),
