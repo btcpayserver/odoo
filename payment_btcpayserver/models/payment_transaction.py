@@ -32,7 +32,7 @@ class PaymentTransaction(models.Model):
 
         res = super()._get_specific_rendering_values(processing_values)
 
-        if self.provider_code != 'btcpay':
+        if self.provider_code != 'btcpayserver':
             return res
 
         base_url = self.provider_id.get_base_url()
@@ -68,11 +68,11 @@ class PaymentTransaction(models.Model):
         """
         tx = super()._get_tx_from_notification_data(provider_code, notification_data)
         _logger.info('GET TX FROM NOTIFICATION Notification_data %s', pprint.pformat(notification_data))
-        if provider_code != 'btcpay' or len(tx) == 1:
+        if provider_code != 'btcpayserver' or len(tx) == 1:
             return tx
 
         reference = notification_data.get('reference')
-        tx = self.search([('reference', '=', reference), ('provider_code', '=', 'btcpay')])
+        tx = self.search([('reference', '=', reference), ('provider_code', '=', 'btcpayserver')])
         if not tx:
             raise ValidationError(
                 "BTCPay: " + _("No transaction found matching reference %s.", reference)
@@ -102,7 +102,7 @@ class PaymentTransaction(models.Model):
         :raise: ValidationError if inconsistent data were received
         """
         super()._process_notification_data(notification_data)
-        if self.provider_code != 'btcpay':
+        if self.provider_code != 'btcpayserver':
             return
 
         _logger.info("_process_notification_data %s", pprint.pformat(notification_data))

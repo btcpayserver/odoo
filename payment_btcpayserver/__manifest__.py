@@ -1,5 +1,5 @@
 #******************************************************************************
-# PAYMENT BTCPAY FOR ODOO
+# PAYMENT BTCPAY SERVER FOR ODOO
 #
 # Copyright (C) 2024 Susanna Fort <susannafm@gmail.com>, ndeet
 #
@@ -20,12 +20,12 @@
 #******************************************************************************
 
 {
-    'name': 'Payment Provider: BTCPay',
+    'name': 'Payment Provider: BTCPay Server',
     'summary': 'This module integrates BTCPAY - pay with Bitcoin - with Odoo v17.0',
     'author': 'Vandekul, ndeet',
     'website': 'https://github.com/btcpayserver/odoo',
     'category': 'Accounting/Payment Providers',
-    'version': '17.0.1.1',
+    'version': '17.0.2.0',
     'license': 'GPL-3',
     'currency': 'USD',
     'application': False,
@@ -33,7 +33,7 @@
     'auto_install': False,
     'depends': ['base', 'account', 'payment'],
     'data': [
-        'views/payment_btcpay_templates.xml',
+        'views/payment_btcpayserver_templates.xml',
         'views/payment_provider_views.xml',
         'views/payment_transaction_views.xml',
         'data/payment_provider_data.xml',
