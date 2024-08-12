@@ -3,11 +3,11 @@
 
 <section class="oe_container">
     <div class="oe_row oe_spaced">
-        <h2 class="oe_slogan">BTCPay Gateway</h2>
-        <h3 class="oe_slogan">This is the module to connect Odoo 17.0 and BTCPay</h3>
+        <h2 class="oe_slogan">BTCPay Server Gateway</h2>
+        <h3 class="oe_slogan">This is the module to connect Odoo 17.0 and BTCPay Server</h3>
         <div class="oe_span6">
             <div class="oe_bg_img">
-                <img src="BTCPayServer_org.png" class="oe_picture oe_screenshot">
+                <img src="BTCPay-Odoo-17-featured.png" class="oe_picture oe_screenshot">
             </div>
         </div>
         <div class="oe_span6">
@@ -20,19 +20,67 @@
 
 <section class="oe_container">
     <div class="oe_row oe_spaced">
-        <h2 class="oe_slogan">Configure Payment Provider</h2>
+        <h2 class="oe_slogan">Install the module</h2>
+        <div class="oe_span12">
+            <p class='oe_mt32'>
+                <ul>
+                    <li>Clone our [repository](https://github.com/btcpayserver/odoo) or download the .zip from the [releases page](https://github.com/btcpayserver/odoo/releases)
+                    <li>Make sure you are on branch `17.0` or downloaded a release tagged with version v17.x
+                    <li>Place the `payment_btcpay` directory in your Odoo addons directory
+                    <li>Install dependencies by running `pip install -r requirements.txt` (from inside the `payment_btcpay` directory)
+                    <li>Restart Odoo
+                    <li>Go to Apps -> Update Apps List
+                    <li>Remove the "Apps" filter and search for "btcpay"
+                    <li>Click **Activate** button
+                </ul>
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Configure BTCPay as payment provider</h2>
         <div class="oe_span6">
             <p class='oe_mt32'>
                 <ul>
-                    <li>Install BTCPay Module -> Website -> eCommerce -> Payment Acquirers -> BTCPay</li>
-                    <li>Put your facace. Best option is 'merchant'.</li>
-                    <li>Put the location as test or live url. Test example url: https://testnet.demo.btcpayserver.org</li>
-                    <li>Put the Confirmation URL where BTCpay will return after payment.</li>
-                    <li>Put your "Pairing Code" if you want that system get the "Token", after that "Pairing Code" will be deleted and the "Token" will appear in the corresponding field. You must safe the changes in order that this happens. NOTE: if you want to get new "Token" throw new "Pairing Code", please remove the "Token" field. Keep in mind that "Token" field must be in blank if you want to get throw the API.</li>
-                    <li>Put your "Token" if you have it and don't want to use Pairing Code to get it.  Remember, if you want to get throw API please don't write anything here.</li>
-                    <li>If you have a Private Key you can write here otherwise system will get when you safe the Payment Provider </li>
-                    <li>Remember to Publish On Website</li>
+                    <li>Go to <strong>Website</strong> -> <strong>Configuration</strong> -> <strong>Payment Providers</strong></li>
+                    <li>Search for BTCPay and click on button <strong>Activate</strong></li>
                 </ul>
+
+                <p>In the BTCPay settings form, tab "Credentials":</p>
+                <ul>
+                    <li>Set field "State" to enabled</li>
+                    <li>Set field "BTCPay Server URL" as test or live URL including https://. Example URL: <a href="https://testnet.demo.btcpayserver.org">https://testnet.demo.btcpayserver.org</a></li>
+                    <li>Get a pairing code from your BTCPay Server store: Settings -> Access Tokens
+                        <ul>
+                            <li>Click on "Create Token" button</li>
+                            <li>Label: enter e.g. "My odoo store"</li>
+                            <li>Public Key: leave empty</li>
+                            <li>Click on "Request Pairing" button, on next page click "Approve" button</li>
+                            <li>At the top copy the code next to "Server initiated pairing code", e.g. "hg7z8wN"</li>
+                        </ul>
+                    </li>
+                    <li>Back in Odoo, paste the code into "Pairing Code" field</li>
+                    <li>Hit Tab key on your keyboard (or click on another field) and the pairing process will start automatically</li>
+                    <li>When the pairing is successful the "Token" and "Private Key" field will be filled automatically</li>
+                    <li>Field Facade, keep default 'merchant'.</li>
+                </ul>
+
+                <p>On the tab "Configuration":</p>
+                <ul>
+                    <li>Make sure field "Payment Journal" is set to "Bank", otherwise you can click the dropdown and click on the suggestion "Bank"</li>
+                    <li>Now you can <strong>save</strong> the settings</li>
+                </ul>
+
+                <p>Check the payment method is enabled:</p>
+                <ul>
+                    <li>Go to <strong>Website</strong> -> <strong>Configuration</strong> -> <strong>Payment Methods</strong></li>
+                    <li>Make sure "Pay with Bitcoin / Lightning Network" is active</li>
+                </ul>
+
+                <p>Congrats, all done. Do some testing to be sure all works.</p>
+
             </p>
         </div>
         <div class="oe_span6">

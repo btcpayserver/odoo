@@ -22,11 +22,12 @@
 {
     'name': 'Payment Provider: BTCPay',
     'summary': 'This module integrates BTCPAY - pay with Bitcoin - with Odoo v17.0',
-    'author': 'Vandekul',
+    'author': 'Vandekul, ndeet',
     'website': 'https://github.com/btcpayserver/odoo',
     'category': 'Accounting/Payment Providers',
     'version': '17.0.1.1',
     'license': 'GPL-3',
+    'currency': 'USD',
     'application': False,
     'installable': True,
     'auto_install': False,
