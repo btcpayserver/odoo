@@ -5,7 +5,7 @@
         <field name="name">Pay with Bitcoin / Lightning Network</field>
         <field name="code">btcpay</field>
         <field name="active">True</field>
-        <field name="image" type="base64" file="payment_btcpay/static/description/icon.png"/>
+        <field name="image" type="base64" file="payment_btcpayserver/static/description/icon.png"/>
         <field name="support_tokenization">False</field>
         <field name="support_express_checkout">False</field>
     </record>
@@ -13,12 +13,12 @@
     <record id="payment_provider_btcpay" model="payment.provider">
         <field name="name">BTCPay payments</field>
         <field name="code">btcpay</field>
-        <field name="image_128" type="base64" file="payment_btcpay/static/description/icon.png"/>
+        <field name="image_128" type="base64" file="payment_btcpayserver/static/description/icon.png"/>
         <field name="redirect_form_view_id" ref="redirect_form"/>
-        <field name="module_id" ref="base.module_payment_btcpay"/>
+        <field name="module_id" ref="base.module_payment_btcpayserver"/>
         <field name="payment_method_ids"
                eval="[Command.set([
-                         ref('payment_btcpay.payment_method_btcpay'),
+                         ref('payment_btcpayserver.payment_method_btcpay'),
                      ])]"
         />
     </record>

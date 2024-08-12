@@ -2,17 +2,17 @@
 
 ## This is the module to connect Odoo 17 and BTCPay Server
 This module allows you to accept bitcoin (and other cryptocurrency) payments in your Odoo e-commerce store.  
-![BTCPay Server Banner](https://raw.githubusercontent.com/btcpayserver/odoo/17.0/payment_btcpay/static/description/BTCPay-Odoo-17-featured.png)
+![BTCPay Server Banner](https://raw.githubusercontent.com/btcpayserver/odoo/17.0/payment_btcpayserver/static/description/BTCPay-Odoo-17-featured.png)
 
 :::tip
-If you use Odoo 16 you can find the documentation [here](https://github.com/btcpayserver/odoo/blob/16.0/payment_btcpay/README.md).
+If you use Odoo 16 you can find the documentation [here](https://github.com/btcpayserver/odoo/blob/16.0/payment_btcpayserver/README.md).
 :::
 
 ## Install the module
 * Clone our [repository](https://github.com/btcpayserver/odoo) or download the .zip from the [releases page](https://github.com/btcpayserver/odoo/releases)
 * Make sure you are on branch `17.0` or downloaded a release tagged with version v17.x
-* Place the `payment_btcpay` directory in your Odoo addons directory
-* Install dependencies by running `pip install -r requirements.txt` (from inside the `payment_btcpay` directory)
+* Place the `payment_btcpayserver` directory in your Odoo addons directory
+* Install dependencies by running `pip install -r requirements.txt` (from inside the `payment_btcpayserver` directory)
 * Restart Odoo
 * Go to Apps -> Update Apps List
 * Remove the "Apps" filter and search for "btcpay"
@@ -46,13 +46,13 @@ Check the payment method is enabled:
 
 Congrats, all done. Do some testing to be sure all works.
 
-![Payment Provider Settings](https://raw.githubusercontent.com/btcpayserver/odoo/17.0/payment_btcpay/static/description/BTCPayPaymentSettings.png)
+![Payment Provider Settings](https://raw.githubusercontent.com/btcpayserver/odoo/17.0/payment_btcpayserver/static/description/BTCPayPaymentSettings.png)
 
 ## How does the payment page look?
 
 During the checkout the customers will have the option to select the payment method "Pay with Bitcoin / Lightning Network". After selecting they will be redirected to the BTCPay checkout page as shown below.
 
-![Checkout page example](https://raw.githubusercontent.com/btcpayserver/odoo/17.0/payment_btcpay/static/description/BTCPayLooksLike.png)
+![Checkout page example](https://raw.githubusercontent.com/btcpayserver/odoo/17.0/payment_btcpayserver/static/description/BTCPayLooksLike.png)
 
 
 ## Transaction BTCPay Details
@@ -61,4 +61,4 @@ In transaction object, you will find more technical information about this metho
 * Invoice Id: the id of the invoice for which you want to fetch an event token
 * Transaction Status: That indicates state of transaction
 
-![Transaction details of BTCPay](https://raw.githubusercontent.com/btcpayserver/odoo/17.0/payment_btcpay/static/description/BtcpayTxDetails.png)
+![Transaction details of BTCPay](https://raw.githubusercontent.com/btcpayserver/odoo/17.0/payment_btcpayserver/static/description/BtcpayTxDetails.png)
