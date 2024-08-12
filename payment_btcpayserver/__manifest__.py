@@ -22,7 +22,7 @@
 {
     'name': 'Payment Provider: BTCPay Server',
     'summary': 'This module integrates BTCPAY - pay with Bitcoin - with Odoo v17.0',
-    'author': 'Vandekul, ndeet',
+    'author': 'BTCPay Server team and contributors',
     'website': 'https://github.com/btcpayserver/odoo',
     'category': 'Accounting/Payment Providers',
     'version': '17.0.2.0',
@@ -38,6 +38,7 @@
         'views/payment_transaction_views.xml',
         'data/payment_provider_data.xml',
     ],
+    'images':  ['static/description/BTCPay-Odoo-17-featured.png'],
     'external_dependencies': {
         'python': ['btcpay-python']
     },

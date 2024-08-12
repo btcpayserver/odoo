@@ -4,15 +4,74 @@
 <section class="oe_container">
     <div class="oe_row oe_spaced">
         <h2 class="oe_slogan">BTCPay Server Gateway</h2>
-        <h3 class="oe_slogan">This is the module to connect Odoo 17.0 and BTCPay Server</h3>
-        <div class="oe_span6">
+        <h3 class="oe_slogan">This module allows you to accept Bitcoin / Lightning Network (and other cryptocurrency) payments in your Odoo e-commerce store.</h3>
+        <div class="oe_span12">
             <div class="oe_bg_img">
                 <img src="BTCPay-Odoo-17-featured.png" class="oe_picture oe_screenshot">
             </div>
         </div>
-        <div class="oe_span6">
-            <p class='oe_mt32'>
-            This module allow you to create an easily way to accept Bitcoins
+    </div>
+    <div class="oe_row oe_spaced">
+        <p class="oe_mt32">
+            BTCPay Server for Odoo is a revolutionary, self-hosted, open-source payment gateway to accept Bitcoin payments. Our seamless integration with Odoo allows you to connect your self-hosted BTCPay Server and start accepting Bitcoin payments in just a few simple steps.
+        </p>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Features</h2>
+        <div class="oe_span12">
+            <p class="oe_mt32">
+                <ul>
+                <li><strong>Zero fees</strong>: Enjoy a payment gateway with no fees. Yes, really!</li>
+                <li><strong>Fully automated system</strong>: BTCPay takes care of payments, invoice management and refunds automatically.</li>
+                <li><strong>Display Bitcoin QR code at checkout</strong>: Enhance customer experience with an easy and secure payment option.</li>
+                <li><strong>No middlemen or KYC</strong>:
+                <ul>
+                <li>Direct, P2P payments (going directly to your wallet)</li>
+                <li>Say goodbye to intermediaries and tedious paperwork</li>
+                <li>Transaction information is only shared between you and your customer</li>
+                </ul>
+                </li>
+                <li><strong>Self-hosted infrastructure</strong>: Maintain full control over your payment gateway.</li>
+                <li><strong>Direct wallet payments</strong>: Be your own bank with a self-custodial service.</li>
+                <li><strong>Lightning Network</strong> integrated out of the box – instant, fast and low cost payments and payouts</li>
+                <li><strong>Reporting and accounting</strong> – CSV exports</li>
+                <li><strong>Advanced invoice managemen</strong>t and refunding integrated in the WooCommerce UI</li>
+                <li><strong>Real-time exchange price tracking</strong> for correct payment amounts</li>
+                <li><strong>Versatile plugin system</strong>:
+                <ul>
+                <li>Extend functionality according to your needs</li>
+                <li>Accept payments in altcoins through various plugins</li>
+                </ul>
+                </li>
+                <li><strong>Elegant checkout design</strong>: Compatible with all Bitcoin wallets and enhanced with your store’s logo and branding for a unique UX.</li>
+                <li><strong>Point-of-sale</strong> integration – Accept payments in your physical shops</li>
+                <li><strong>Multilingual ready</strong>: Serve a global audience right out of the box.</li>
+                <li><strong>Top-notch privacy and security</strong>: Protect your and your customers’ data.</li>
+                <li><strong>Community-driven support</strong>: Get responsive assistance from our dedicated community (<a href="http://chat.btcpayserver.org" rel="nofollow ugc">Mattermost</a> or <a href="https://t.me/btcpayserver" rel="nofollow ugc">Telegram</a>).</li>
+                </ul>
+            </p>
+        </div>
+    </div>
+</section>
+
+
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h2 class="oe_slogan">Requirements</h2>
+        <div class="oe_span12">
+            <p class="oe_mt32">
+                <ul>
+                    <li>Odoo 17 running</li> 
+                    <li>eCommerce module enabled</li>
+                    <li>You have a BTCPay Server version 1.10.0 or later, either <a href="https://docs.btcpayserver.org/Deployment/">self-hosted</a> or <a href="https://docs.btcpayserver.org/Deployment/ThirdPartyHosting/">hosted by a third-party</a></li>
+                    <li><a href="https://docs.btcpayserver.org/RegisterAccount/" class="">You've a registered account on the instance</a></li> 
+                    <li><a href="https://docs.btcpayserver.org/CreateStore/" class="">You've a BTCPay store on the instance</a></li> 
+                    <li><a href="https://docs.btcpayserver.org/WalletSetup/" class="">You've a wallet connected to your store</a></li>
+                </ul>
             </p>
         </div>
     </div>
@@ -22,7 +81,7 @@
     <div class="oe_row oe_spaced">
         <h2 class="oe_slogan">Install the module</h2>
         <div class="oe_span12">
-            <p class='oe_mt32'>
+            <p class="oe_mt32">
                 <ul>
                     <li>Clone our [repository](https://github.com/btcpayserver/odoo) or download the .zip from the [releases page](https://github.com/btcpayserver/odoo/releases)
                     <li>Make sure you are on branch `17.0` or downloaded a release tagged with version v17.x
@@ -42,7 +101,7 @@
     <div class="oe_row oe_spaced">
         <h2 class="oe_slogan">Configure BTCPay as payment provider</h2>
         <div class="oe_span6">
-            <p class='oe_mt32'>
+            <p class="oe_mt32">
                 <ul>
                     <li>Go to <strong>Website</strong> -> <strong>Configuration</strong> -> <strong>Payment Providers</strong></li>
                     <li>Search for BTCPay and click on button <strong>Activate</strong></li>
@@ -100,7 +159,7 @@
             </div>
         </div>
         <div class="oe_span6">
-            <p class='oe_mt32'>
+            <p class="oe_mt32">
                 <ul>
                     In payment webpage where payment methods appear, you will find new payment method called BTCPay.
                     If you click on it you will be redirect to the server that you indicate in location field.
@@ -114,7 +173,7 @@
     <div class="oe_row oe_spaced">
         <h2 class="oe_slogan">Transaction BTCPay Details</h2>  
         <div class="oe_span6">
-            <p class='oe_mt32'>
+            <p class="oe_mt32">
                 <ul>
                     In transaction object, you will find more technical information about this method of payment:
                     <li>Transaction Id: cryptocurrency transaction hash for the executed payout.</li>
