@@ -48,7 +48,7 @@ class BTCPayController(http.Controller):
     def checkout(self, **data):
 
         _logger.info("CHECKOUT: notification received from BTCPay with data:\n%s", pprint.pformat(data))
-        tx_sudo = request.env['payment.transaction'].sudo()._get_tx_from_notification_data('btcpay', data)
+        tx_sudo = request.env['payment.transaction'].sudo()._get_tx_from_notification_data('btcpayserver', data)
         provider = tx_sudo.provider_id
         notification_url = str(data.get('notify_url')).replace("http://", "https://")
         base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
@@ -82,7 +82,7 @@ class BTCPayController(http.Controller):
             notification_data = {"reference": data['data']['orderId'],
                                  "invoiceID": data['data']['id']}
             # Check the origin and integrity of the notification
-            tx_sudo = request.env['payment.transaction'].sudo()._get_tx_from_notification_data('btcpay', notification_data)
+            tx_sudo = request.env['payment.transaction'].sudo()._get_tx_from_notification_data('btcpayserver', notification_data)
             provider = tx_sudo.provider_id
             client = BTCPayClient(host=provider.btcpay_location, pem=provider.btcpay_privateKey,
                                   tokens={provider.btcpay_facade: provider.btcpay_token})
@@ -96,7 +96,7 @@ class BTCPayController(http.Controller):
                     "txid": fetched_invoice['url']}
 
             # Handle the notification data
-            tx_sudo._handle_notification_data('btcpay', notification_data)
+            tx_sudo._handle_notification_data('btcpayserver', notification_data)
         except ValidationError:  # Acknowledge the notification to avoid getting spammed
             _logger.exception("Unable to handle the notification data; skipping to acknowledge")
         return ''

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="payment_provider_btcpayserver" model="payment.provider">
+        <field name="name">BTCPay payments</field>
+        <field name="display_as">Pay with Bitcoin / Lightning Network</field>
+        <field name="code">btcpayserver</field>
+        <field name="image_128" type="base64" file="payment_btcpayserver/static/description/icon.png"/>
+        <field name="module_id" ref="base.module_payment_btcpayserver"/>
+        <field name="redirect_form_view_id" ref="redirect_form"/>
+    </record>
+
+</odoo>

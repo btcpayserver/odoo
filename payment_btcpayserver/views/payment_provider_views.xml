@@ -7,11 +7,11 @@
         <field name="inherit_id" ref="payment.payment_provider_form"/>
         <field name="arch" type="xml">
             <group name="provider_credentials" position='inside'>
-                <group attrs="{'invisible': [('code', '!=', 'btcpay')]}">
+                <group attrs="{'invisible': [('code', '!=', 'btcpayserver')]}">
                     <field name="btcpay_location"/>
                     <field name="btcpay_pairingCode"/>
                 </group>
-                <group attrs="{'invisible': [('code', '!=', 'btcpay')]}">
+                <group attrs="{'invisible': [('code', '!=', 'btcpayserver')]}">
                     <field name="btcpay_token"/>
                     <field name="btcpay_privateKey"/>
                     <field name="btcpay_facade"/>
