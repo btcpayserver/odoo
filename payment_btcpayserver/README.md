@@ -62,3 +62,7 @@ In transaction object, you will find more technical information about this metho
 * Transaction Status: That indicates state of transaction
 
 ![Transaction details of BTCPay](https://raw.githubusercontent.com/btcpayserver/odoo/17.0/payment_btcpayserver/static/description/BtcpayTxDetails.png)
+
+## Troubleshooting
+### The order and transaction status does not get updated to "paid"
+If the BTCPay connection generally works, like redirect to BTCPay checkout page (QR-code) then check your odoo logs and make sure PDF generation generally works. If there are errors mentioning wkhtmltopdf then you need to install `wkhtmltopdf` on your server.
