@@ -57,21 +57,21 @@ class PaymentTransaction(models.Model):
             'notify_url': base_url + self.notify_url,
         }
 
-    def _get_tx_from_notification_data(self, provider_code, notification_data):
+    def _search_by_reference(self, provider_code, payment_data):
         """ Override of payment to find the transaction based on BTCPay data.
 
         :param str provider_code: The code of the provider that handled the transaction
-        :param dict notification_data: The notification data sent by the provider
+        :param dict payment_data: The payment data sent by the provider
         :return: The transaction if found
         :rtype: recordset of `payment.transaction`
         :raise: ValidationError if the data match no transaction
         """
-        tx = super()._get_tx_from_notification_data(provider_code, notification_data)
-        _logger.info('GET TX FROM NOTIFICATION Notification_data %s', pprint.pformat(notification_data))
+        tx = super()._search_by_reference(provider_code, payment_data)
+        _logger.info('SEARCH BY REFERENCE Payment_data %s', pprint.pformat(payment_data))
         if provider_code != 'btcpayserver' or len(tx) == 1:
             return tx
 
-        reference = notification_data.get('reference')
+        reference = payment_data.get('reference')
         tx = self.search([('reference', '=', reference), ('provider_code', '=', 'btcpayserver')])
         if not tx:
             raise ValidationError(
@@ -79,49 +79,53 @@ class PaymentTransaction(models.Model):
             )
         return tx
 
-    def _handle_notification_data(self, provider_code, notification_data):
-        """ Match the transaction with the notification data, update its state and return it.
+    def _process(self, provider_code, payment_data):
+        """ Override of payment to process the transaction based on BTCPay data.
 
         :param str provider_code: The code of the provider handling the transaction.
-        :param dict notification_data: The notification data sent by the provider.
+        :param dict payment_data: The payment data sent by the provider.
         :return: The transaction.
         :rtype: recordset of `payment.transaction`
         """
-        tx = self._get_tx_from_notification_data(provider_code, notification_data)
-        tx._process_notification_data(notification_data)
+        tx = super()._process(provider_code, payment_data)
+        if provider_code != 'btcpayserver':
+            return tx
+            
+        tx = self._search_by_reference(provider_code, payment_data)
+        tx._apply_updates(payment_data)
         return tx
 
-    def _process_notification_data(self, notification_data):
+    def _apply_updates(self, payment_data):
         """ Override of payment to process the transaction based on BTCPay data.
 
         Note: self.ensure_one()
 
-        :param dict notification_data: The notification data sent by the provider
+        :param dict payment_data: The payment data sent by the provider
         :return: None
         :raise: ValidationError if inconsistent data were received
         """
-        super()._process_notification_data(notification_data)
+        super()._apply_updates(payment_data)
         if self.provider_code != 'btcpayserver':
             return
 
-        _logger.info("_process_notification_data %s", pprint.pformat(notification_data))
-        txn_id = notification_data.get('reference')
+        _logger.info("_apply_updates %s", pprint.pformat(payment_data))
+        txn_id = payment_data.get('reference')
         if not all(txn_id):
             raise ValidationError(
                 "BTCPay: " + _("Missing value for txn_id (%(txn_id)s)).", txn_id=txn_id))
 
         self.provider_reference = txn_id
-        self.btcpay_txid = notification_data.get('txid')
-        self.btcpay_status = notification_data.get('status')
+        self.btcpay_txid = payment_data.get('txid')
+        self.btcpay_status = payment_data.get('status')
 
         if self.btcpay_status in ['paid','processing']:
-            self._set_pending(state_message=notification_data.get('pending_reason'))
+            self._set_pending(state_message=payment_data.get('pending_reason'))
         elif self.btcpay_status in ['confirmed', 'complete']:
             self._set_done()
             confirmed_orders = self._check_amount_and_confirm_order()
             confirmed_orders._send_order_confirmation_mail()
         elif self.btcpay_status in ['new']:
-            self.btcpay_invoiceId = notification_data.get('invoiceID')
+            self.btcpay_invoiceId = payment_data.get('invoiceID')
         elif self.btcpay_status in ['cancel','cancelled']:
             self._set_canceled()
         elif self.btcpay_status in ['invalid']:
