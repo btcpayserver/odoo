@@ -110,7 +110,7 @@ class PaymentTransaction(models.Model):
 
         _logger.info("_apply_updates %s", pprint.pformat(payment_data))
         txn_id = payment_data.get('reference')
-        if not all(txn_id):
+        if not txn_id:
             raise ValidationError(
                 "BTCPay: " + _("Missing value for txn_id (%(txn_id)s)).", txn_id=txn_id))
 
@@ -136,3 +136,28 @@ class PaymentTransaction(models.Model):
             self._set_error(
                 "BTCPay: " + _("Received data with invalid payment status: %s", self.btcpay_status)
             )
+            
+    def _extract_amount_data(self, payment_data):
+        """Extract the amount, currency and rounding precision from the payment data.
+
+        This method must be overridden by providers to parse the amount data from the payment data.
+        If the provider returns `None`, the amount validation is skipped.
+
+        :param dict payment_data: The payment data sent by the provider.
+        :return: The amount data, in the {amount: float, currency_code: str, precision_digits: int}
+                 format.
+        :rtype: dict|None
+        """
+        _logger.info("_extract_amount_data %s", pprint.pformat(payment_data))
+        if self.provider_code != 'btcpayserver' or not payment_data.get('amount'):
+            return super()._extract_amount_data(payment_data)
+            
+        # Extract amount from payment data
+        amount = payment_data.get('amount')
+        
+        # Return the amount data in the required format
+        return {
+            'amount': float(amount),
+            'currency_code': self.currency_id.name,
+            'precision_digits': self.currency_id.decimal_places,
+        }

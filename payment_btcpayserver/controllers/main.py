@@ -77,10 +77,42 @@ class BTCPayController(http.Controller):
         """ BTCPay IPN. """
         _logger.info('BTCPAY IPN RECEIVED... ')
         data = json.loads(request.httprequest.data)
-        _logger.info("%s", pprint.pformat(data))
+        _logger.info("IPN Data: %s", pprint.pformat(data))
         try:
-            notification_data = {"reference": data['data']['orderId'],
-                                 "invoiceID": data['data']['id']}
+            # Extract order ID and invoice ID from the data
+            # The structure might vary depending on the BTCPay Server version
+            # Try different possible structures
+            order_id = None
+            invoice_id = None
+            
+            # Try to extract from data['data'] structure (v18 structure)
+            if 'data' in data and isinstance(data['data'], dict):
+                if 'orderId' in data['data']:
+                    order_id = data['data']['orderId']
+                if 'id' in data['data']:
+                    invoice_id = data['data']['id']
+            
+            # If not found, try to extract directly from data (possible v19 structure)
+            if not order_id and 'orderId' in data:
+                order_id = data['orderId']
+            if not invoice_id and 'id' in data:
+                invoice_id = data['id']
+                
+            # If still not found, try to extract from other possible structures
+            if not order_id and 'order_id' in data:
+                order_id = data['order_id']
+            if not invoice_id and 'invoice_id' in data:
+                invoice_id = data['invoice_id']
+                
+            # Log the extracted values
+            _logger.info("Extracted order_id: %s, invoice_id: %s", order_id, invoice_id)
+            
+            if not order_id or not invoice_id:
+                _logger.error("Could not extract order_id or invoice_id from the IPN data")
+                return ''
+                
+            notification_data = {"reference": order_id,
+                                 "invoiceID": invoice_id}
             # Check the origin and integrity of the notification
             tx_sudo = request.env['payment.transaction'].sudo()._search_by_reference('btcpayserver', notification_data)
             provider = tx_sudo.provider_id
@@ -90,10 +122,15 @@ class BTCPayController(http.Controller):
             fetched_invoice = client.get_invoice(notification_data['invoiceID'])
             _logger.info('fetched_invoice = %s',pprint.pformat(fetched_invoice))
 
+            # Get the amount from the transaction and ensure it's in the correct format
+            amount = tx_sudo.amount
+            _logger.info("Transaction amount: %s", amount)
+                
             notification_data = {"reference": fetched_invoice['orderId'],
                     "status": fetched_invoice['status'],
                     "invoiceID": fetched_invoice['id'],
-                    "txid": fetched_invoice['url']}
+                    "txid": fetched_invoice['url'],
+                    "amount": amount}
 
             # Handle the notification data
             tx_sudo._process('btcpayserver', notification_data)
