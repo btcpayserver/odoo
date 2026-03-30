@@ -1,13 +1,12 @@
-import logging
 import pprint
-from werkzeug import urls
 
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
 
 from odoo.addons.payment import utils as payment_utils
+from odoo.addons.payment.logging import get_payment_logger
 
-_logger = logging.getLogger(__name__)
+
+_logger = get_payment_logger(__name__)
 
 
 class PaymentTransaction(models.Model):
@@ -21,7 +20,7 @@ class PaymentTransaction(models.Model):
     notify_url = 'payment/btcpay/ipn'
 
     def _get_specific_rendering_values(self, processing_values):
-        """ Override of payment to return Specific rendering values.
+        """ Override of payment to return BTCPay-specific rendering values.
 
         Note: self.ensure_one() from `_get_processing_values`
 
@@ -29,14 +28,12 @@ class PaymentTransaction(models.Model):
         :return: The dict of provider-specific processing values
         :rtype: dict
         """
-
         res = super()._get_specific_rendering_values(processing_values)
 
         if self.provider_code != 'btcpayserver':
             return res
 
         base_url = self.provider_id.get_base_url()
-        _logger.info('Hola! API URL: %s', processing_values)
         partner_first_name, partner_last_name = payment_utils.split_partner_name(self.partner_name)
 
         return {
@@ -57,76 +54,63 @@ class PaymentTransaction(models.Model):
             'notify_url': base_url + self.notify_url,
         }
 
-    def _get_tx_from_notification_data(self, provider_code, notification_data):
-        """ Override of payment to find the transaction based on BTCPay data.
-
-        :param str provider_code: The code of the provider that handled the transaction
-        :param dict notification_data: The notification data sent by the provider
-        :return: The transaction if found
-        :rtype: recordset of `payment.transaction`
-        :raise: ValidationError if the data match no transaction
-        """
-        tx = super()._get_tx_from_notification_data(provider_code, notification_data)
-        _logger.info('GET TX FROM NOTIFICATION Notification_data %s', pprint.pformat(notification_data))
-        if provider_code != 'btcpayserver' or len(tx) == 1:
-            return tx
-
-        reference = notification_data.get('reference')
-        tx = self.search([('reference', '=', reference), ('provider_code', '=', 'btcpayserver')])
-        if not tx:
-            raise ValidationError(
-                "BTCPay: " + _("No transaction found matching reference %s.", reference)
-            )
-        return tx
-
-    def _handle_notification_data(self, provider_code, notification_data):
-        """ Match the transaction with the notification data, update its state and return it.
+    @api.model
+    def _extract_reference(self, provider_code, payment_data):
+        """ Override of payment to extract the transaction reference from BTCPay data.
 
         :param str provider_code: The code of the provider handling the transaction.
-        :param dict notification_data: The notification data sent by the provider.
-        :return: The transaction.
-        :rtype: recordset of `payment.transaction`
+        :param dict payment_data: The payment data sent by the provider.
+        :return: The transaction reference.
+        :rtype: str
         """
-        tx = self._get_tx_from_notification_data(provider_code, notification_data)
-        tx._process_notification_data(notification_data)
-        return tx
+        if provider_code != 'btcpayserver':
+            return super()._extract_reference(provider_code, payment_data)
 
-    def _process_notification_data(self, notification_data):
+        return payment_data.get('reference')
+
+    def _extract_amount_data(self, payment_data):
+        """ Override of payment to skip amount validation for BTCPay.
+
+        BTCPay invoices handle amount validation on the BTCPay server side,
+        so we skip the Odoo-side validation.
+
+        :param dict payment_data: The payment data sent by the provider.
+        :return: None to skip validation.
+        :rtype: None
+        """
+        if self.provider_code != 'btcpayserver':
+            return super()._extract_amount_data(payment_data)
+
+        return None
+
+    def _apply_updates(self, payment_data):
         """ Override of payment to process the transaction based on BTCPay data.
 
-        Note: self.ensure_one()
+        Note: self.ensure_one() from `_process`
 
-        :param dict notification_data: The notification data sent by the provider
+        :param dict payment_data: The payment data sent by the provider.
         :return: None
-        :raise: ValidationError if inconsistent data were received
         """
-        super()._process_notification_data(notification_data)
         if self.provider_code != 'btcpayserver':
-            return
+            return super()._apply_updates(payment_data)
 
-        _logger.info("_process_notification_data %s", pprint.pformat(notification_data))
-        txn_id = notification_data.get('reference')
-        if not all(txn_id):
-            raise ValidationError(
-                "BTCPay: " + _("Missing value for txn_id (%(txn_id)s)).", txn_id=txn_id))
+        _logger.info("BTCPay _apply_updates: %s", pprint.pformat(payment_data))
 
-        self.provider_reference = txn_id
-        self.btcpay_txid = notification_data.get('txid')
-        self.btcpay_status = notification_data.get('status')
+        self.provider_reference = payment_data.get('reference')
+        self.btcpay_txid = payment_data.get('txid')
+        self.btcpay_status = payment_data.get('status')
 
-        if self.btcpay_status in ['paid','processing']:
-            self._set_pending(state_message=notification_data.get('pending_reason'))
+        if self.btcpay_status in ['paid', 'processing']:
+            self._set_pending(state_message=payment_data.get('pending_reason'))
         elif self.btcpay_status in ['confirmed', 'complete']:
             self._set_done()
-            confirmed_orders = self._check_amount_and_confirm_order()
-            confirmed_orders._send_order_confirmation_mail()
         elif self.btcpay_status in ['new']:
-            self.btcpay_invoiceId = notification_data.get('invoiceID')
-        elif self.btcpay_status in ['cancel','cancelled']:
+            self.btcpay_invoiceId = payment_data.get('invoiceID')
+        elif self.btcpay_status in ['cancel', 'cancelled']:
             self._set_canceled()
         elif self.btcpay_status in ['invalid']:
             _logger.info(
-                "received data with invalid payment status (%s) for transaction with reference %s",
+                "Received data with invalid payment status (%s) for transaction with reference %s",
                 self.btcpay_status, self.reference
             )
             self._set_error(
