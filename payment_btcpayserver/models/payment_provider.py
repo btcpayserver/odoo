@@ -1,10 +1,11 @@
-import logging
-
 from odoo import _, api, fields, models
 from .libs.client import BTCPayClient
 from .libs import crypto
 
-_logger = logging.getLogger(__name__)
+from odoo.addons.payment.logging import get_payment_logger
+
+
+_logger = get_payment_logger(__name__)
 
 
 class PaymentProvider(models.Model):
@@ -22,14 +23,13 @@ class PaymentProvider(models.Model):
 
     def create(self, values_list):
         if self.code == 'btcpayserver':
-            values_list['btcpay_privateKey'] = crypto.generate_privakey()
+            values_list['btcpay_privateKey'] = crypto.generate_privkey()
 
         return super(PaymentProvider, self).create(values_list)
 
     @api.onchange('btcpay_pairingCode')
     def _onchange_pairingCode(self):
         if not self.btcpay_token and self.code == 'btcpayserver' and not self.btcpay_pairingCode == '':
-            #_logger.info("ONCHANGE PAIRING CODE***SELF:  %s %s %s", self.btcpay_location, self.btcpay_privateKey, self.btcpay_pairingCode)
             self.btcpay_privateKey = crypto.generate_privkey()
             client = BTCPayClient(host=self.btcpay_location, pem=self.btcpay_privateKey)
             token = client.pair_client(self.btcpay_pairingCode)
@@ -39,13 +39,10 @@ class PaymentProvider(models.Model):
     def _onchange_token(self):
         if self.code == 'btcpayserver':
             self.btcpay_pairingCode = ''
-            #_logger.info("ONCHANGE TOKEN")
-
 
     @api.onchange('btcpay_location')
     def _onchange_location(self):
         if self.code == 'btcpayserver':
             self.btcpay_token = ''
-            #_logger.info("ONCHANGE LOCATION ***SELF:  %s %s %s", self.btcpay_location, self.btcpay_privateKey, self.btcpay_pairingCode)
             self.btcpay_privateKey = ''
             self.btcpay_pairingCode = ''
