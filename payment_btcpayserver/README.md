@@ -14,7 +14,7 @@ The following instructions work for Odoo 18 and 19. You just need to make sure t
 
 ## Install the module
 * Clone our [repository](https://github.com/btcpayserver/odoo) or download the .zip from the [releases page](https://github.com/btcpayserver/odoo/releases)
-* Make sure you are on branch `19.0` (or `18.0`) or downloaded a release tagged with version v19.x (or v18.x)
+* Make sure you are on branch `19.0` (or `18.0`) or downloaded a [release](https://github.com/btcpayserver/odoo/releases) tagged with version v19.x (or v18.x)
 * Place the `payment_btcpayserver` directory in your Odoo addons directory
 * Install dependencies by running `pip install -r requirements.txt` (from inside the `payment_btcpayserver` directory)
 * Restart Odoo
