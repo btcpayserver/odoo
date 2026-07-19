@@ -22,7 +22,6 @@
 import json
 import pprint
 
-import werkzeug
 from werkzeug import urls
 
 from odoo import _, http
@@ -41,85 +40,107 @@ class BTCPayController(http.Controller):
     _notify_url = '/payment/btcpay/ipn'
     _return_url = '/payment/btcpay/return'
 
-    @http.route(_checkout_url, type='http', auth='public', csrf=False, website=True)
-    def checkout(self, **data):
+    @staticmethod
+    def _btcpay_client(provider):
+        return BTCPayClient(
+            host=provider.btcpay_location,
+            pem=provider.btcpay_privateKey,
+            tokens={provider.btcpay_facade: provider.btcpay_token},
+        )
 
-        _logger.info("CHECKOUT: received data:\n%s", pprint.pformat(data))
-
-        # Look up the transaction by reference
-        reference = data.get('reference')
-        tx_sudo = request.env['payment.transaction'].sudo().search([
+    @staticmethod
+    def _find_transaction(reference):
+        return request.env['payment.transaction'].sudo().search([
             ('reference', '=', reference),
             ('provider_code', '=', 'btcpayserver'),
         ], limit=1)
+
+    @http.route(_checkout_url, type='http', auth='public', methods=['POST'],
+                csrf=False, website=True)
+    def checkout(self, **data):
+        """ Create the BTCPay invoice and redirect the buyer to it.
+
+        The redirect form only carries the transaction reference. The invoice
+        price, currency and buyer details are read from the transaction
+        server-side and are never taken from the (client-controlled) request
+        data, so a buyer cannot have an invoice created for a tampered amount.
+        """
+        _logger.info("BTCPay: checkout request with data:\n%s", pprint.pformat(data))
+        reference = data.get('reference')
+        tx_sudo = self._find_transaction(reference)
         if not tx_sudo:
             raise ValidationError(
-                _("BTCPay: No transaction found matching reference %s.", reference)
-            )
+                _("BTCPay: No transaction found matching reference %s.", reference))
+        if tx_sudo.state != 'draft':
+            # Already processed (e.g. double submission): fall back to the
+            # generic payment status page.
+            return request.redirect('/payment/status')
 
         provider = tx_sudo.provider_id
-        notification_url = str(data.get('notify_url')).replace("http://", "https://")
-        base_url = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        redirect_url = urls.url_join(base_url, self._return_url)
-        client = BTCPayClient(host=provider.btcpay_location, pem=provider.btcpay_privateKey, tokens={provider.btcpay_facade: provider.btcpay_token})
-        invoice = client.create_invoice(
-            {"price": data.get('amount'),
-             "currency": data.get('currency_id'),
-             "orderId": data.get('reference'),
-             "token": provider.btcpay_token,
-             "redirectURL": redirect_url,
-             "notificationURL": notification_url,
-             "extendedNotifications": True,
-             "buyer": {"email": data.get('email') or 'noemailavailable@example.com',
-                       "name": data.get('name'),
-                       "address1": data.get('street'),
-                       "locality": data.get('city'),
-                       "postalCode": data.get('zip'),
-                       "country": data.get('country'),
-                       "notify": False}})
-        _logger.info('Invoice %s \n NOTIFY URL: %s', invoice, notification_url)
-        return werkzeug.utils.redirect(invoice['url'])
+        base_url = provider.get_base_url()
+        client = self._btcpay_client(provider)
+        invoice = client.create_invoice({
+            "price": tx_sudo.amount,
+            "currency": tx_sudo.currency_id.name,
+            "orderId": tx_sudo.reference,
+            "token": provider.btcpay_token,
+            "redirectURL": urls.url_join(base_url, self._return_url),
+            "notificationURL": urls.url_join(base_url, self._notify_url),
+            "extendedNotifications": True,
+            "buyer": {
+                "email": tx_sudo.partner_email or 'noemailavailable@example.com',
+                "name": tx_sudo.partner_name,
+                "address1": tx_sudo.partner_address,
+                "locality": tx_sudo.partner_city,
+                "postalCode": tx_sudo.partner_zip,
+                "country": tx_sudo.partner_country_id.code,
+                "notify": False,
+            },
+        })
+        tx_sudo.btcpay_invoiceId = invoice.get('id')
+        _logger.info("BTCPay: created invoice %s for transaction %s",
+                     invoice.get('id'), tx_sudo.reference)
+        return request.redirect(invoice['url'], local=False)
 
     @http.route(_notify_url, type='jsonrpc', auth='public', csrf=False)
     def btcpay_ipn(self, **post):
         """ BTCPay IPN. """
-        _logger.info('BTCPAY IPN RECEIVED...')
+        _logger.info('BTCPay: IPN received')
         data = json.loads(request.httprequest.data)
         _logger.info("%s", pprint.pformat(data))
         try:
             reference = data['data']['orderId']
             invoice_id = data['data']['id']
 
-            # Look up the transaction by reference
-            tx_sudo = request.env['payment.transaction'].sudo().search([
-                ('reference', '=', reference),
-                ('provider_code', '=', 'btcpayserver'),
-            ], limit=1)
+            tx_sudo = self._find_transaction(reference)
             if not tx_sudo:
                 _logger.warning("No transaction found matching reference %s.", reference)
                 return ''
 
-            provider = tx_sudo.provider_id
-            client = BTCPayClient(host=provider.btcpay_location, pem=provider.btcpay_privateKey,
-                                  tokens={provider.btcpay_facade: provider.btcpay_token})
-
+            # The invoice is fetched back from BTCPay (signed request); the
+            # posted payload is only used to locate the transaction.
+            client = self._btcpay_client(tx_sudo.provider_id)
             fetched_invoice = client.get_invoice(invoice_id)
-            _logger.info('fetched_invoice = %s', pprint.pformat(fetched_invoice))
+            _logger.info('BTCPay: fetched invoice = %s', pprint.pformat(fetched_invoice))
 
             payment_data = {
-                "reference": fetched_invoice['orderId'],
-                "status": fetched_invoice['status'],
-                "invoiceID": fetched_invoice['id'],
-                "txid": fetched_invoice['url'],
+                "reference": fetched_invoice.get('orderId'),
+                "status": fetched_invoice.get('status'),
+                "invoiceID": fetched_invoice.get('id'),
+                "txid": fetched_invoice.get('url'),
+                # Settled amount and currency, validated against the transaction
+                # by the payment framework before it is set done.
+                "amount": fetched_invoice.get('price'),
+                "currency": fetched_invoice.get('currency'),
             }
 
-            # Use the new Odoo 19 _process() pipeline
             tx_sudo._process('btcpayserver', payment_data)
         except ValidationError:
             _logger.exception("Unable to handle the notification data; skipping to acknowledge")
         return ''
 
-    @http.route(_return_url, type='http', auth="public", methods=['GET'], csrf=False, save_session=False)
+    @http.route(_return_url, type='http', auth="public", methods=['GET'],
+                csrf=False, save_session=False)
     def btcpay_return_from_redirect(self, **data):
         """ BTCPay return """
         _logger.info("BTCPay: user returned to shop after payment")

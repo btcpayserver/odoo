@@ -2,7 +2,6 @@ import pprint
 
 from odoo import _, api, fields, models
 
-from odoo.addons.payment import utils as payment_utils
 from odoo.addons.payment.logging import get_payment_logger
 
 
@@ -15,12 +14,14 @@ class PaymentTransaction(models.Model):
     btcpay_invoiceId = fields.Char("Invoice Id")
     btcpay_txid = fields.Char("Transaction Id")
     btcpay_status = fields.Char("Transaction Status")
-    api_url = '/btcpay/checkout'
-    checkout_url = '/btcpay/checkout'
-    notify_url = 'payment/btcpay/ipn'
 
     def _get_specific_rendering_values(self, processing_values):
         """ Override of payment to return BTCPay-specific rendering values.
+
+        The redirect form only needs to carry the transaction reference: the
+        BTCPay invoice is built server-side (see the checkout controller) from
+        the transaction, so no amount, currency or buyer data is sent through
+        the browser.
 
         Note: self.ensure_one() from `_get_processing_values`
 
@@ -29,29 +30,12 @@ class PaymentTransaction(models.Model):
         :rtype: dict
         """
         res = super()._get_specific_rendering_values(processing_values)
-
         if self.provider_code != 'btcpayserver':
             return res
 
-        base_url = self.provider_id.get_base_url()
-        partner_first_name, partner_last_name = payment_utils.split_partner_name(self.partner_name)
-
         return {
-            'address1': self.partner_address,
-            'amount': self.amount,
-            'city': self.partner_city,
-            'country': self.partner_country_id.code,
-            'currency_code': self.currency_id.name,
-            'email': self.partner_email,
-            'first_name': partner_first_name,
-            'item_name': f"{self.company_id.name}: {self.reference}",
-            'item_number': self.reference,
-            'last_name': partner_last_name,
-            'lc': self.partner_lang,
-            'state': self.partner_state_id.name,
-            'zip_code': self.partner_zip,
-            'api_url':  self.checkout_url,
-            'notify_url': base_url + self.notify_url,
+            'api_url': '/btcpay/checkout',
+            'reference': self.reference,
         }
 
     @api.model
@@ -69,19 +53,28 @@ class PaymentTransaction(models.Model):
         return payment_data.get('reference')
 
     def _extract_amount_data(self, payment_data):
-        """ Override of payment to skip amount validation for BTCPay.
+        """ Override of payment to return the settled amount and currency.
 
-        BTCPay invoices handle amount validation on the BTCPay server side,
-        so we skip the Odoo-side validation.
+        The amount and currency are read back from BTCPay on notification and
+        returned here so that the generic amount validation compares them
+        against the transaction. This prevents a tampered or mismatched invoice
+        from confirming the transaction (and thus the order).
 
         :param dict payment_data: The payment data sent by the provider.
-        :return: None to skip validation.
-        :rtype: None
+        :return: The settled amount data, or ``None`` for other providers.
+        :rtype: dict|None
         """
         if self.provider_code != 'btcpayserver':
             return super()._extract_amount_data(payment_data)
 
-        return None
+        try:
+            amount = float(payment_data.get('amount'))
+        except (TypeError, ValueError):
+            amount = None
+        return {
+            'amount': amount,
+            'currency_code': payment_data.get('currency'),
+        }
 
     def _apply_updates(self, payment_data):
         """ Override of payment to process the transaction based on BTCPay data.
@@ -106,13 +99,22 @@ class PaymentTransaction(models.Model):
             self._set_done()
         elif self.btcpay_status in ['new']:
             self.btcpay_invoiceId = payment_data.get('invoiceID')
-        elif self.btcpay_status in ['cancel', 'cancelled']:
-            self._set_canceled()
+        elif self.btcpay_status in ['expired', 'cancel', 'cancelled']:
+            self._set_canceled(
+                state_message="BTCPay: " + _("Invoice status: %s.", self.btcpay_status))
         elif self.btcpay_status in ['invalid']:
-            _logger.info(
+            _logger.warning(
                 "Received data with invalid payment status (%s) for transaction with reference %s",
                 self.btcpay_status, self.reference
             )
             self._set_error(
-                "BTCPay: " + _("Received data with invalid payment status: %s", self.btcpay_status)
+                "BTCPay: " + _("Received data with invalid payment status: %s.", self.btcpay_status)
+            )
+        else:
+            _logger.warning(
+                "Received data with unknown payment status (%s) for transaction with reference %s",
+                self.btcpay_status, self.reference
+            )
+            self._set_error(
+                "BTCPay: " + _("Received data with unknown payment status: %s.", self.btcpay_status)
             )
