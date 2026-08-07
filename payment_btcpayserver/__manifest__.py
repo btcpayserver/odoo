@@ -25,7 +25,7 @@
     'author': 'BTCPay Server team and contributors',
     'website': 'https://github.com/btcpayserver/odoo',
     'category': 'Accounting/Payment Providers',
-    'version': '18.0.1.0',
+    'version': '18.0.1.1',
     'license': 'GPL-3',
     'currency': 'USD',
     'application': False,
@@ -39,8 +39,10 @@
         'data/payment_provider_data.xml',
     ],
     'images':  ['static/description/BTCPay-Odoo-17-featured.png'],
+    # The BTCPay client (legacy BitPay API) is vendored in models/libs and
+    # only requires 'ecdsa' (plus 'requests', shipped with Odoo).
     'external_dependencies': {
-        'python': ['btcpay-python']
+        'python': ['ecdsa']
     },
     'post_init_hook': 'post_init_hook',
     'uninstall_hook': 'uninstall_hook',
