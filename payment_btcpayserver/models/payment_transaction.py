@@ -1,6 +1,7 @@
 import pprint
 
 from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 from odoo.addons.payment.logging import get_payment_logger
 
@@ -89,32 +90,43 @@ class PaymentTransaction(models.Model):
 
         _logger.info("BTCPay _apply_updates: %s", pprint.pformat(payment_data))
 
-        self.provider_reference = payment_data.get('reference')
-        self.btcpay_txid = payment_data.get('txid')
-        self.btcpay_status = payment_data.get('status')
+        if not payment_data.get('reference'):
+            raise ValidationError(
+                "BTCPay: " + _("Received payment data with missing reference."))
 
-        if self.btcpay_status in ['paid', 'processing']:
+        # Keep both external-reference fields bound to the authenticated
+        # BTCPay invoice. The controller validates this identity before
+        # entering `_process`.
+        if invoice_id := payment_data.get('invoiceID'):
+            self.btcpay_invoiceId = invoice_id
+            self.provider_reference = invoice_id
+        if payment_data.get('txid'):
+            self.btcpay_txid = payment_data['txid']
+        status = payment_data.get('status')
+        self.btcpay_status = status
+
+        if status in ('paid', 'processing'):
             self._set_pending(state_message=payment_data.get('pending_reason'))
-        elif self.btcpay_status in ['confirmed', 'complete']:
+        elif status in ('confirmed', 'complete'):
             self._set_done()
-        elif self.btcpay_status in ['new']:
-            self.btcpay_invoiceId = payment_data.get('invoiceID')
-        elif self.btcpay_status in ['expired', 'cancel', 'cancelled']:
+        elif status == 'new':
+            pass  # Invoice created on BTCPay, waiting for the buyer to pay.
+        elif status in ('expired', 'cancel', 'cancelled'):
             self._set_canceled(
-                state_message="BTCPay: " + _("Invoice status: %s.", self.btcpay_status))
-        elif self.btcpay_status in ['invalid']:
+                state_message="BTCPay: " + _("Invoice status: %s.", status))
+        elif status == 'invalid':
             _logger.warning(
                 "Received data with invalid payment status (%s) for transaction with reference %s",
-                self.btcpay_status, self.reference
+                status, self.reference
             )
             self._set_error(
-                "BTCPay: " + _("Received data with invalid payment status: %s.", self.btcpay_status)
+                "BTCPay: " + _("Received data with invalid payment status: %s.", status)
             )
         else:
             _logger.warning(
                 "Received data with unknown payment status (%s) for transaction with reference %s",
-                self.btcpay_status, self.reference
+                status, self.reference
             )
             self._set_error(
-                "BTCPay: " + _("Received data with unknown payment status: %s.", self.btcpay_status)
+                "BTCPay: " + _("Received data with unknown payment status: %s.", status)
             )
