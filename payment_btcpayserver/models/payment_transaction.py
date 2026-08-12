@@ -37,6 +37,10 @@ class PaymentTransaction(models.Model):
         return {
             'api_url': '/btcpay/checkout',
             'reference': self.reference,
+            # Keep the pre-19.0.1.1 key during rolling deployments. QWeb
+            # templates live in the database, so an instance restarted before
+            # the module is upgraded can still render the previous template.
+            'item_number': self.reference,
         }
 
     @api.model
