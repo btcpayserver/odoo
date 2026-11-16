@@ -155,3 +155,32 @@ class PaymentTransaction(models.Model):
                 "BTCPay: " + _("Received data with unknown payment status: %s.",
                                f'{status}/{additional}' if additional else status)
             )
+        if self.state == 'done':
+            self._btcpay_sync_order_payment_method()
+
+    def _btcpay_sync_order_payment_method(self):
+        """Default the sale orders' "Payment Method" to the provider's journal
+        method line after a successful payment.
+
+        Odoo leaves ``sale.order.preferred_payment_method_line_id`` empty
+        unless the partner has a default inbound payment method line, so the
+        later invoice payment registration has no method preselected. When the
+        payment actually settled through BTCPay, defaulting it to the
+        provider's method line (never overwriting a manual choice) books the
+        payment on the provider's outstanding account automatically.
+        """
+        self.ensure_one()
+        if 'sale_order_ids' not in self._fields:
+            return  # sale module not installed
+        method_line = self.env['account.payment.method.line'].search(
+            [('payment_provider_id', '=', self.provider_id.id)], limit=1)
+        if not method_line:
+            return
+        orders = self.sale_order_ids.filtered(
+            lambda o: not o.preferred_payment_method_line_id)
+        if orders:
+            orders.preferred_payment_method_line_id = method_line
+            _logger.info(
+                "BTCPay: defaulted payment method to %s on orders %s",
+                method_line.display_name, ', '.join(orders.mapped('name')),
+            )
