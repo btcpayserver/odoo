@@ -39,6 +39,11 @@
         'data/payment_provider_data.xml',
     ],
     'images':  ['static/description/BTCPay-Odoo-17-featured.png'],
+    'assets': {
+        'web.assets_backend': [
+            'payment_btcpayserver/static/src/scss/provider_form.scss',
+        ],
+    },
     # The Greenfield client only needs 'requests', which ships with Odoo.
     'post_init_hook': 'post_init_hook',
     'uninstall_hook': 'uninstall_hook',

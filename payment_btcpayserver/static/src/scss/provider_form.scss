@@ -1,0 +1,27 @@
+// BTCPay provider config form: give all field widgets a light border so
+// inputs and read-only values read as fields, not floating text.
+.btcpay_provider_config {
+    .o_field_widget,
+    input.o_input,
+    .o_field_many2one .o_input {
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        background-color: #fff;
+        padding: 2px 8px;
+        min-width: 0;
+
+        &:focus {
+            border-color: var(--Primary, #714b67);
+            outline: none;
+        }
+    }
+
+    // read-only (non-input) widgets: keep the border subtle and the text wrappable
+    span.o_field_widget,
+    div.o_field_widget {
+        display: inline-block;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        white-space: normal;
+    }
+}
