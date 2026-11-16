@@ -7,7 +7,7 @@ from odoo.addons.payment.logging import get_payment_logger
 
 from .libs.greenfield_client import GreenfieldClient, GreenfieldError, WEBHOOK_EVENTS
 
-_logger = get_payment_logger(__name__)
+_logger = get_payment_logger(__name__, sensitive_keys=['apiKey', 'secret'])
 
 _WEBHOOK_PATH = '/payment/btcpay/webhook'
 
@@ -185,23 +185,38 @@ class PaymentProvider(models.Model):
                 connection=f'❌ {message}', store_name=store.get('name'))
             raise UserError(_('BTCPay connection test failed: %s', message))
 
-        # Verify the API key carries the required permissions. Greenfield does
-        # not expose a key's permissions, so each one is probed with a minimal
-        # call; 403 responses name the missing permissions explicitly.
-        missing = []
+        # Verify the API key's permissions and store scoping via the
+        # current-api-key endpoint: it exposes the exact permission list,
+        # where store-scoped permissions carry a ':<storeId>' suffix.
         try:
-            ok, missing, errors = client.check_permissions()
-        except Exception as error:
-            ok, missing, errors = False, [], [str(error)]
+            key_info = client.get_current_api_key()
+        except GreenfieldError as error:
+            self._btcpay_update_status(connection=f'❌ {error}', store_name=store.get('name'))
+            raise UserError(_('BTCPay connection test failed: %s', error))
+        granted = key_info.get('permissions') or []
+        ok, missing, warnings = client.check_permissions(self.btcpay_store_id)
         if missing:
             message = _(
                 'The API key is missing permissions: %s. Create a new key with '
-                'all six permissions listed in the API Key field help.',
-                ', '.join(missing))
+                'all six permissions listed in the API Key field help, bound to '
+                'store %s.',
+                ', '.join(missing), self.btcpay_store_id)
             self._btcpay_update_status(connection=f'❌ {message}', store_name=store.get('name'))
             raise UserError(_('BTCPay connection test failed: %s', message))
-        if errors:
-            _logger.warning('BTCPay: permission probe errors: %s', errors)
+        if warnings:
+            self._btcpay_update_status(
+                connection=_('⚠️ Connected, but the API key is not scoped to the '
+                             'store: %s (works server-wide). For least exposure '
+                             'create a key bound to store %s.',
+                             ', '.join(warnings), self.btcpay_store_id),
+                store_name=store.get('name'))
+            _logger.info(
+                'BTCPay: API key %s grants server-wide permissions: %s',
+                key_info.get('label'), ', '.join(warnings))
+        else:
+            self._btcpay_update_status(
+                connection=_('✅ API key "%s" has all required permissions, '
+                             'scoped to the store.', key_info.get('label')))
 
         exists, webhook_message = self._btcpay_check_webhook_exists(client)
         if not exists and self.btcpay_webhook_id:

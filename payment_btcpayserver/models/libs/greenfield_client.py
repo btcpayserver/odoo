@@ -129,54 +129,59 @@ class GreenfieldClient:
 
     # === API KEY PERMISSIONS === #
 
-    # Minimal, side-effect-free probe call per required permission. Greenfield
-    # has no endpoint exposing the permissions of an API key, so each required
-    # permission is tested with the least intrusive call that would fail with
-    # 403 when the permission is missing.
-    PERMISSION_PROBES = {
-        'btcpay.store.canviewinvoices':
-            lambda self: self._request('GET', self._store_path('/invoices?take=1')),
-        'btcpay.store.cancreateinvoice':
-            None,  # no harmless probe: checked as canmodifyinvoices fallback below
-        'btcpay.store.canmodifyinvoices':
-            lambda self: self._request(
-                'PUT', self._store_path('/invoices/000000000000000000000000'),
-                {'metadata': {}}),
-        'btcpay.store.webhooks.canmodifywebhooks':
-            lambda self: self._request('GET', self._store_path('/webhooks')),
-        'btcpay.store.canviewstoresettings':
-            lambda self: self._request('GET', self._store_path()),
-        'btcpay.store.cancreatenonapprovedpullpayments':
-            lambda self: self._request('GET', self._store_path('/pull-payments')),
-    }
+    # Permissions required by this integration, in the order they should be
+    # reported when missing. ``cancreateinvoice`` cannot be probed harmlessly
+    # and is expected in the same key as ``canmodifyinvoices``.
+    REQUIRED_PERMISSIONS = [
+        'btcpay.store.canviewinvoices',
+        'btcpay.store.cancreateinvoice',
+        'btcpay.store.canmodifyinvoices',
+        'btcpay.store.webhooks.canmodifywebhooks',
+        'btcpay.store.canviewstoresettings',
+        'btcpay.store.cancreatenonapprovedpullpayments',
+    ]
 
-    def check_permissions(self, permissions=None):
-        """Probe the API key against the required permissions.
+    def get_current_api_key(self):
+        """Return the ApiKeyData of the key used for authentication
+        (label, permissions incl. store scopes)."""
+        return self._request('GET', '/api-keys/current')
 
-        :param list permissions: permissions to probe (defaults to all required)
-        :return: (ok: bool, missing: list[str], errors: list[str])
+    def check_permissions(self, store_id, required=None):
+        """Verify the API key's permissions and store scoping.
+
+        Uses the current-api-key endpoint: it exposes the exact permission
+        list of the key, where store-scoped permissions carry a
+        ``:<storeId>`` suffix. Un-scoped (server-wide) keys are accepted but
+        reported, since the guide recommends binding keys to one store.
+
+        :param str store_id: the store the integration is configured for
+        :param list required: permissions to check (defaults to all required)
+        :return: (ok: bool, missing: list[str], warnings: list[str])
         """
-        required = list(permissions or self.PERMISSION_PROBES)
-        missing, errors = [], []
+        required = list(required or self.REQUIRED_PERMISSIONS)
+        key_info = self.get_current_api_key()
+        granted = key_info.get('permissions') or []
+
+        warnings = []
+        # a permission granted without a scope applies server-wide
+        bare_permissions = {p for p in granted if ':' not in p}
+        # a permission granted with ':<storeId>' applies to that store only
+        scoped_permissions = {
+            (p.split(':', 1)[0], p.split(':', 1)[1])
+            for p in granted if ':' in p
+        }
+
+        missing = []
         for permission in required:
-            probe = self.PERMISSION_PROBES.get(permission)
-            if probe is None:
-                # cancreateinvoice cannot be probed harmlessly; creating an
-                # invoice is done by the checkout anyway. Treat it as present
-                # unless canmodifyinvoices also failed (both are granted
-                # together in practice).
+            if (permission, store_id) in scoped_permissions:
+                continue  # properly scoped to the configured store
+            if permission in bare_permissions:
+                # granted server-wide: works, but the guide recommends a
+                # store-bound key
+                warnings.append(permission)
                 continue
-            try:
-                probe(self)
-            except GreenfieldError as error:
-                if error.status == 403:
-                    missing.append(permission)
-                else:
-                    errors.append(f'{permission}: {error}')
-            except Exception as error:  # unexpected probe failure
-                errors.append(f'{permission}: {error}')
-        # If modify works, create does too in every realistic setup; flag it
-        # only when nothing else could confirm it and modify is missing.
-        if 'btcpay.store.canmodifyinvoices' in missing:
-            missing.append('btcpay.store.cancreateinvoice')
-        return (not missing and not errors), missing, errors
+            missing.append(permission)
+
+        if not granted:
+            missing.extend(required)
+        return (not missing), missing, warnings
