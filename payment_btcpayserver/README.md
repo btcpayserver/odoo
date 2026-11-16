@@ -1,20 +1,20 @@
-# BTCPay Server payment gateway for Odoo 18 / 19
+# BTCPay Server payment gateway for Odoo 18 / 19 / 20
 
-## This is the module to connect Odoo 18 / 19 and BTCPay Server
+## This is the module to connect Odoo 18 / 19 / 20 and BTCPay Server
 This module allows you to accept bitcoin (and other cryptocurrency) payments in your Odoo e-commerce store.  
-![BTCPay Server Banner](https://raw.githubusercontent.com/btcpayserver/odoo/18.0/payment_btcpayserver/static/description/BTCPay-Odoo-17-featured.png)
+![BTCPay Server Banner](https://raw.githubusercontent.com/btcpayserver/odoo/20.0/payment_btcpayserver/static/description/BTCPay-Odoo-17-featured.png)
 
 :::tip
-If you use Odoo 16 you can find the documentation [here](https://github.com/btcpayserver/odoo/blob/16.0/payment_btcpayserver/README.md) and for Odoo 17 [here](https://github.com/btcpayserver/odoo/blob/17.0/payment_btcpayserver/README.md).
+If you use Odoo 16 you can find the documentation [here](https://github.com/btcpayserver/odoo/blob/16.0/payment_btcpayserver/README.md), for Odoo 17 [here](https://github.com/btcpayserver/odoo/blob/17.0/payment_btcpayserver/README.md) and for Odoo 18 [here](https://github.com/btcpayserver/odoo/blob/18.0/payment_btcpayserver/README.md).
 :::
 
 :::tip
-The following instructions work for Odoo 18 and 19. You just need to make sure to download the matching branch release or use the matching branch (18.0 or 19.0) mentioned in the steps below.
+The following instructions work for Odoo 18, 19 and 20. You just need to make sure to download the matching branch release or use the matching branch (18.0, 19.0 or 20.0) mentioned in the steps below.
 :::
 
 ## Install the module
 * Clone our [repository](https://github.com/btcpayserver/odoo) or download the .zip from the [releases page](https://github.com/btcpayserver/odoo/releases)
-* Make sure you are on branch `19.0` (or `18.0`) or downloaded a [release](https://github.com/btcpayserver/odoo/releases) tagged with version v19.x (or v18.x)
+* Make sure you are on branch `20.0` (`19.0` or `18.0`) or downloaded a [release](https://github.com/btcpayserver/odoo/releases) tagged with version v20.x (v19.x or v18.x)
 * Place the `payment_btcpayserver` directory in your Odoo addons directory
 * Install dependencies by running `pip install -r requirements.txt` (from inside the `payment_btcpayserver` directory)
 * Restart Odoo
@@ -51,13 +51,13 @@ Check the payment method is enabled:
 
 Congrats, all done. Do some testing to be sure all works.
 
-![Payment Provider Settings](https://raw.githubusercontent.com/btcpayserver/odoo/18.0/payment_btcpayserver/static/description/BTCPayPaymentSettings.png)
+![Payment Provider Settings](https://raw.githubusercontent.com/btcpayserver/odoo/20.0/payment_btcpayserver/static/description/BTCPayPaymentSettings.png)
 
 ## How does the payment page look?
 
 During the checkout the customers will have the option to select the payment method "Pay with Bitcoin / Lightning Network". After selecting they will be redirected to the BTCPay checkout page as shown below.
 
-![Checkout page example](https://raw.githubusercontent.com/btcpayserver/odoo/18.0/payment_btcpayserver/static/description/BTCPayLooksLike.png)
+![Checkout page example](https://raw.githubusercontent.com/btcpayserver/odoo/20.0/payment_btcpayserver/static/description/BTCPayLooksLike.png)
 
 
 ## Transaction BTCPay Details
@@ -66,7 +66,7 @@ In transaction object, you will find more technical information about this metho
 * Invoice Id: the id of the invoice for which you want to fetch an event token
 * Transaction Status: That indicates state of transaction
 
-![Transaction details of BTCPay](https://raw.githubusercontent.com/btcpayserver/odoo/18.0/payment_btcpayserver/static/description/BtcpayTxDetails.png)
+![Transaction details of BTCPay](https://raw.githubusercontent.com/btcpayserver/odoo/20.0/payment_btcpayserver/static/description/BtcpayTxDetails.png)
 
 ## Troubleshooting
 ### The order and transaction status does not get updated to "paid"
