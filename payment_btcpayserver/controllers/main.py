@@ -242,7 +242,11 @@ class BTCPayController(http.Controller):
             },
         })
         self._validate_created_invoice(tx_sudo, invoice)
-        tx_sudo.write({
+        # Since Odoo 20.0, payment.transaction.write() requires the
+        # payment_safe_write context flag. Storing the freshly created invoice
+        # id is a preparation write: if the request rolls back, the next
+        # checkout simply creates a new invoice (the unbound one expires).
+        tx_sudo.with_context(payment_safe_write=True).write({
             'btcpay_invoiceId': invoice['id'],
             'provider_reference': invoice['id'],
         })
@@ -296,7 +300,12 @@ class BTCPayController(http.Controller):
                 "currency": fetched_invoice.get('currency'),
             }
 
-            tx_sudo._process('btcpayserver', payment_data)
+            # Since Odoo 20.0, _process() takes no provider code anymore and
+            # payment data must go through _record(): it is stored as a
+            # payment.data record and applied by the processing cron with
+            # proper locking. The /payment/status page triggers immediate
+            # processing when the customer is redirected back to the shop.
+            tx_sudo._record(payment_data)
         except ValidationError as error:
             _logger.warning("BTCPay: rejected notification: %s", error)
         return ''
