@@ -25,7 +25,7 @@
     'author': 'BTCPay Server team and contributors',
     'website': 'https://github.com/btcpayserver/odoo',
     'category': 'Accounting/Payment Providers',
-    'version': '20.0.1.0',
+    'version': '20.0.2.0',
     'license': 'GPL-3',
     'currency': 'USD',
     'application': False,
@@ -39,11 +39,7 @@
         'data/payment_provider_data.xml',
     ],
     'images':  ['static/description/BTCPay-Odoo-17-featured.png'],
-    # The BTCPay client (legacy BitPay API) is vendored in models/libs and
-    # only requires 'ecdsa' (plus 'requests', shipped with Odoo).
-    'external_dependencies': {
-        'python': ['ecdsa']
-    },
+    # The Greenfield client only needs 'requests', which ships with Odoo.
     'post_init_hook': 'post_init_hook',
     'uninstall_hook': 'uninstall_hook',
 }

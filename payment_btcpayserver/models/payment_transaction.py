@@ -84,6 +84,12 @@ class PaymentTransaction(models.Model):
     def _apply_updates(self, payment_data):
         """ Override of payment to process the transaction based on BTCPay data.
 
+        Greenfield invoices have a two-axis state: ``status`` (New, Processing,
+        Settled, Expired, Invalid) and ``additionalStatus`` (None, PaidPartial,
+        PaidLate, PaidOver, Marked, Invalid). Both are always evaluated
+        together; edge cases (partial, late and over payments) must never
+        auto-confirm and always leave an explicit message for the operator.
+
         Note: self.ensure_one() from `_process`
 
         :param dict payment_data: The payment data sent by the provider.
@@ -106,31 +112,46 @@ class PaymentTransaction(models.Model):
             self.provider_reference = invoice_id
         if payment_data.get('txid'):
             self.btcpay_txid = payment_data['txid']
-        status = payment_data.get('status')
-        self.btcpay_status = status
+        status = (payment_data.get('status') or '').strip()
+        additional = (payment_data.get('additionalStatus') or '').strip()
+        if additional in ('', 'None'):
+            additional = ''
+        self.btcpay_status = f'{status}/{additional}' if additional else status
 
-        if status in ('paid', 'processing'):
-            self._set_pending(state_message=payment_data.get('pending_reason'))
-        elif status in ('confirmed', 'complete'):
-            self._set_done()
-        elif status == 'new':
-            pass  # Invoice created on BTCPay, waiting for the buyer to pay.
-        elif status in ('expired', 'cancel', 'cancelled'):
-            self._set_canceled(
-                state_message="BTCPay: " + _("Invoice status: %s.", status))
-        elif status == 'invalid':
-            _logger.warning(
-                "Received data with invalid payment status (%s) for transaction with reference %s",
-                status, self.reference
-            )
+        if status == 'Processing':
+            self._set_pending(state_message="BTCPay: " + _(
+                "Payment seen in mempool, waiting for confirmations."))
+        elif status == 'Settled':
+            if additional == 'PaidOver':
+                self._set_done(state_message="BTCPay: " + _(
+                    "Invoice settled, but the customer overpaid - manual review required."))
+            elif additional == 'Marked':
+                self._set_done(state_message="BTCPay: " + _(
+                    "Invoice settled (manually marked as settled in BTCPay)."))
+            else:
+                self._set_done()
+        elif status == 'Expired':
+            if additional in ('PaidPartial', 'PaidLate'):
+                # A payment arrived although the invoice expired: it may be
+                # incomplete (partial) or late. Never auto-confirm; the
+                # operator decides (e.g. refund or manual confirmation).
+                self._set_canceled(state_message="BTCPay: " + _(
+                    "The invoice expired but a payment was received after expiry "
+                    "(%s) - manual review required.", additional))
+            else:
+                self._set_canceled(
+                    state_message="BTCPay: " + _("Invoice status: Expired."))
+        elif status == 'Invalid':
             self._set_error(
-                "BTCPay: " + _("Received data with invalid payment status: %s.", status)
-            )
+                "BTCPay: " + _("Received data with invalid payment status: Invalid."))
+        elif status == 'New':
+            pass  # Invoice created on BTCPay, waiting for the buyer to pay.
         else:
             _logger.warning(
-                "Received data with unknown payment status (%s) for transaction with reference %s",
-                status, self.reference
+                "Received data with unknown payment status (%s/%s) for transaction with reference %s",
+                status, additional, self.reference
             )
             self._set_error(
-                "BTCPay: " + _("Received data with unknown payment status: %s.", status)
+                "BTCPay: " + _("Received data with unknown payment status: %s.",
+                               f'{status}/{additional}' if additional else status)
             )
