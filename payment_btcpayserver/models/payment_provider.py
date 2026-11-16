@@ -184,6 +184,25 @@ class PaymentProvider(models.Model):
             self._btcpay_update_status(
                 connection=f'❌ {message}', store_name=store.get('name'))
             raise UserError(_('BTCPay connection test failed: %s', message))
+
+        # Verify the API key carries the required permissions. Greenfield does
+        # not expose a key's permissions, so each one is probed with a minimal
+        # call; 403 responses name the missing permissions explicitly.
+        missing = []
+        try:
+            ok, missing, errors = client.check_permissions()
+        except Exception as error:
+            ok, missing, errors = False, [], [str(error)]
+        if missing:
+            message = _(
+                'The API key is missing permissions: %s. Create a new key with '
+                'all six permissions listed in the API Key field help.',
+                ', '.join(missing))
+            self._btcpay_update_status(connection=f'❌ {message}', store_name=store.get('name'))
+            raise UserError(_('BTCPay connection test failed: %s', message))
+        if errors:
+            _logger.warning('BTCPay: permission probe errors: %s', errors)
+
         exists, webhook_message = self._btcpay_check_webhook_exists(client)
         if not exists and self.btcpay_webhook_id:
             # Recover on the spot: register a fresh webhook.

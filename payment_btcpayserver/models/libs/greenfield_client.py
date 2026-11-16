@@ -126,3 +126,57 @@ class GreenfieldClient:
             secret.encode('utf-8'), raw_body, hashlib.sha256,
         ).hexdigest()
         return hmac.compare_digest(expected, signature_header)
+
+    # === API KEY PERMISSIONS === #
+
+    # Minimal, side-effect-free probe call per required permission. Greenfield
+    # has no endpoint exposing the permissions of an API key, so each required
+    # permission is tested with the least intrusive call that would fail with
+    # 403 when the permission is missing.
+    PERMISSION_PROBES = {
+        'btcpay.store.canviewinvoices':
+            lambda self: self._request('GET', self._store_path('/invoices?take=1')),
+        'btcpay.store.cancreateinvoice':
+            None,  # no harmless probe: checked as canmodifyinvoices fallback below
+        'btcpay.store.canmodifyinvoices':
+            lambda self: self._request(
+                'PUT', self._store_path('/invoices/000000000000000000000000'),
+                {'metadata': {}}),
+        'btcpay.store.webhooks.canmodifywebhooks':
+            lambda self: self._request('GET', self._store_path('/webhooks')),
+        'btcpay.store.canviewstoresettings':
+            lambda self: self._request('GET', self._store_path()),
+        'btcpay.store.cancreatenonapprovedpullpayments':
+            lambda self: self._request('GET', self._store_path('/pull-payments')),
+    }
+
+    def check_permissions(self, permissions=None):
+        """Probe the API key against the required permissions.
+
+        :param list permissions: permissions to probe (defaults to all required)
+        :return: (ok: bool, missing: list[str], errors: list[str])
+        """
+        required = list(permissions or self.PERMISSION_PROBES)
+        missing, errors = [], []
+        for permission in required:
+            probe = self.PERMISSION_PROBES.get(permission)
+            if probe is None:
+                # cancreateinvoice cannot be probed harmlessly; creating an
+                # invoice is done by the checkout anyway. Treat it as present
+                # unless canmodifyinvoices also failed (both are granted
+                # together in practice).
+                continue
+            try:
+                probe(self)
+            except GreenfieldError as error:
+                if error.status == 403:
+                    missing.append(permission)
+                else:
+                    errors.append(f'{permission}: {error}')
+            except Exception as error:  # unexpected probe failure
+                errors.append(f'{permission}: {error}')
+        # If modify works, create does too in every realistic setup; flag it
+        # only when nothing else could confirm it and modify is missing.
+        if 'btcpay.store.canmodifyinvoices' in missing:
+            missing.append('btcpay.store.cancreateinvoice')
+        return (not missing and not errors), missing, errors
