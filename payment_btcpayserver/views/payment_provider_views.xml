@@ -7,17 +7,17 @@
         <field name="inherit_id" ref="payment.payment_provider_form"/>
         <field name="arch" type="xml">
             <group name="provider_credentials" position='inside'>
-                <group invisible="code != 'btcpayserver'" string="BTCPay Server (Greenfield API)">
-                    <group>
+                <group colspan="2" invisible="code != 'btcpayserver'" string="BTCPay Server (Greenfield API)">
+                    <group col="2">
                         <field name="btcpay_location"/>
                         <field name="btcpay_store_id"/>
                         <field name="btcpay_api_key" password="True"/>
                     </group>
-                    <group>
-                        <field name="btcpay_webhook_url" readonly="1"/>
-                        <field name="btcpay_store_name" readonly="1" invisible="not btcpay_store_name"/>
-                        <field name="btcpay_connection_status" readonly="1" invisible="not btcpay_connection_status"/>
-                        <field name="btcpay_webhook_status" readonly="1" invisible="not btcpay_webhook_status"/>
+                    <field name="btcpay_webhook_url" readonly="1" colspan="2"/>
+                    <group col="4" colspan="2">
+                        <field name="btcpay_store_name" readonly="1" invisible="not btcpay_store_name" colspan="2"/>
+                        <field name="btcpay_connection_status" readonly="1" invisible="not btcpay_connection_status" colspan="2"/>
+                        <field name="btcpay_webhook_status" readonly="1" invisible="not btcpay_webhook_status" colspan="4"/>
                     </group>
                     <div colspan="2">
                         <button name="action_btcpay_test_connection" type="object"
