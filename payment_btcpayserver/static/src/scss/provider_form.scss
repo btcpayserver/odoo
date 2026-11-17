@@ -18,21 +18,43 @@
         }
     }
 
-    // keep the action buttons from sticking together
-    div > .btn {
-        margin-right: 0.5rem;
-
-        &:last-child {
-            margin-right: 0;
-        }
-    }
-
-    // the buttons div sits between inputs and status fields: give it air;
-    // on narrow widths buttons wrap onto extra rows that also need air
+    // keep the action buttons from sticking together (flex container so
+    // row-gap applies to wrapped button rows too)
     div[colspan="2"] {
+        display: flex;
+        flex-wrap: wrap;
         margin-top: 14px;
         margin-bottom: 8px;
         row-gap: 8px;
+
+        .btn {
+            margin-right: 0.5rem;
+
+            &:last-child {
+                margin-right: 0;
+            }
+        }
+    }
+
+    // the label/value <td>s of this group: labels must reference their input
+    td > label.o_form_label {
+        display: flex;
+        align-items: center;
+    }
+
+    // status rows: plain "Label: value" lines (readonly spans carry no id,
+    // so no <label for> is used -> no broken label references)
+    .o_row {
+        gap: 8px;
+
+        span.o_form_label {
+            min-width: 160px;
+            color: #666;
+        }
+
+        span.o_field_widget {
+            overflow-wrap: anywhere;
+        }
     }
 
     // disconnect stays red: it deletes remote + local state

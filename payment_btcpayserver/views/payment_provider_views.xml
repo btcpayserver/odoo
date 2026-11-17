@@ -36,10 +36,22 @@
                                 confirm="This deletes the webhook on the BTCPay store (if possible) and clears all stored credentials. Continue?"
                                 invisible="not btcpay_store_id and not btcpay_api_key"/>
                     </div>
-                    <field name="btcpay_webhook_url" readonly="1"/>
-                    <field name="btcpay_store_name" readonly="1" invisible="not btcpay_store_name"/>
-                    <field name="btcpay_connection_status" readonly="1" invisible="not btcpay_connection_status"/>
-                    <field name="btcpay_webhook_status" readonly="1" invisible="not btcpay_webhook_status"/>
+                    <div colspan="2" class="o_row" invisible="not btcpay_webhook_url">
+                        <span class="o_form_label">Webhook Endpoint</span>
+                        <field name="btcpay_webhook_url" nolabel="1" readonly="1"/>
+                    </div>
+                    <div colspan="2" class="o_row" invisible="not btcpay_store_name">
+                        <span class="o_form_label">BTCPay Store Name</span>
+                        <field name="btcpay_store_name" nolabel="1" readonly="1"/>
+                    </div>
+                    <div colspan="2" class="o_row" invisible="not btcpay_connection_status">
+                        <span class="o_form_label">Connection Status</span>
+                        <field name="btcpay_connection_status" nolabel="1" readonly="1"/>
+                    </div>
+                    <div colspan="2" class="o_row" invisible="not btcpay_webhook_status">
+                        <span class="o_form_label">Webhook Status</span>
+                        <field name="btcpay_webhook_status" nolabel="1" readonly="1"/>
+                    </div>
                     <field name="btcpay_authorize_url" invisible="1"/>
                 </group>
             </group>
