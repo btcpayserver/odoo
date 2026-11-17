@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+
 from werkzeug import urls
 
 from odoo import _, api, fields, models
@@ -10,6 +13,7 @@ from .libs.greenfield_client import GreenfieldClient, GreenfieldError, WEBHOOK_E
 _logger = get_payment_logger(__name__, sensitive_keys=['apiKey', 'secret'])
 
 _WEBHOOK_PATH = '/payment/btcpay/webhook'
+_AUTHORIZE_CALLBACK_PATH = '/payment/btcpay/authorize'
 
 
 class PaymentProvider(models.Model):
@@ -52,6 +56,10 @@ class PaymentProvider(models.Model):
         string='Connection Status', readonly=True, copy=False)
     btcpay_webhook_status = fields.Char(
         string='Webhook Status', readonly=True, copy=False)
+    btcpay_authorize_url = fields.Char(
+        string='BTCPay Authorization URL', compute='_compute_btcpay_authorize_url',
+        help='BTCPay page where the user authorizes Odoo to create invoices on '
+             'one store and manage the webhook. Redirects back with the API key.')
 
     # === COMPUTED === #
 
@@ -62,6 +70,10 @@ class PaymentProvider(models.Model):
             except Exception:
                 base_url = ''
             provider.btcpay_webhook_url = urls.url_join(base_url, _WEBHOOK_PATH) if base_url else False
+
+    def _compute_btcpay_authorize_url(self):
+        for provider in self:
+            provider.btcpay_authorize_url = provider._btcpay_authorize_url()
 
     # === HELPERS === #
 
@@ -76,6 +88,130 @@ class PaymentProvider(models.Model):
     def _btcpay_credentials_complete(self):
         self.ensure_one()
         return bool(self.btcpay_location and self.btcpay_api_key and self.btcpay_store_id)
+
+    def _btcpay_authorize_url(self):
+        """Build the BTCPay api-keys/authorize redirect URL for this provider.
+
+        The ``redirect`` handed to BTCPay is our callback URL carrying the
+        provider id and an HMAC ``state`` in its query string — BTCPay posts
+        its auto-submit form to that exact URL, so both survive the round
+        trip (the POST body itself only contains apiKey/userId/permissions).
+        The state is signed over ``<id>|<callback base url>`` and re-verified
+        on the callback, so credentials can only be applied to the provider
+        that started the wizard.
+        """
+        self.ensure_one()
+        if not self.btcpay_location:
+            return False
+        base_url = self.get_base_url()
+        callback_base = urls.url_join(base_url, _AUTHORIZE_CALLBACK_PATH)
+        state = self._btcpay_wizard_state_sign(callback_base)
+        redirect_uri = f'{callback_base}?{urls.url_encode({"provider": self.id, "state": state})}'
+        query = {
+            'permissions': GreenfieldClient.REQUIRED_PERMISSIONS,
+            'applicationName': 'Odoo',
+            'strict': 'true',
+            'selectiveStores': 'true',
+            'redirect': redirect_uri,
+        }
+        return f"{self.btcpay_location.rstrip('/')}/api-keys/authorize?{urls.url_encode(query)}"
+
+    def _btcpay_wizard_state_sign(self, callback_base):
+        """HMAC-sign ``<id>|<callback base url>``; the callback re-verifies it."""
+        self.ensure_one()
+        secret = self.env['ir.config_parameter'].sudo().get_str('database.secret')
+        payload = f'{self.id}|{callback_base}'
+        return hmac.new(
+            secret.encode('utf-8'), payload.encode('utf-8'), hashlib.sha256,
+        ).hexdigest()
+
+    def _btcpay_wizard_state_verify(self, redirect_uri, state):
+        self.ensure_one()
+        if not state:
+            return False
+        expected = self._btcpay_wizard_state_sign(redirect_uri)
+        return hmac.compare_digest(expected, state)
+
+    def _btcpay_apply_wizard_credentials(self, api_key, permissions):
+        """Atomically swap in wizard credentials (MIGRATION-GREENFIELD.md §Phase 2).
+
+        1. validate the returned key + resolve its scoped store id,
+        2. register the webhook for the new store,
+        3. only then store the new credentials,
+        4. delete the old webhook with the old credentials (best effort).
+        On failure nothing is written and the error message is returned.
+        """
+        self.ensure_one()
+        old = {
+            'btcpay_api_key': self.btcpay_api_key,
+            'btcpay_store_id': self.btcpay_store_id,
+            'btcpay_webhook_secret': self.btcpay_webhook_secret,
+            'btcpay_webhook_id': self.btcpay_webhook_id,
+        }
+        # 1) validate the new key; the store id comes from a scoped permission
+        scoped_stores = {
+            p.split(':', 1)[1] for p in permissions
+            if ':' in p and p.split(':', 1)[0] in (
+                'btcpay.store.canviewinvoices', 'btcpay.store.canviewstoresettings')
+        }
+        if len(scoped_stores) != 1:
+            return False, _(
+                'The BTCPay authorization did not return exactly one store '
+                '(got: %s). Re-run the wizard and pick a single store.',
+                ', '.join(sorted(scoped_stores)) or _('none'))
+        store_id = scoped_stores.pop()
+        client = GreenfieldClient(
+            host=self.btcpay_location, api_key=api_key, store_id=store_id)
+        try:
+            store = client.get_store()
+            if store.get('id') != store_id:
+                return False, _(
+                    'The authorized API key resolves to store %s, not %s.',
+                    store.get('id'), store_id)
+            ok, missing, _warnings = client.check_permissions(store_id)
+        except GreenfieldError as error:
+            return False, str(error)
+        if not ok:
+            return False, _(
+                'The authorized API key is missing permissions: %s',
+                ', '.join(missing))
+        # 2) register the webhook on the new store
+        try:
+            endpoint_url = urls.url_join(self.get_base_url(), _WEBHOOK_PATH)
+            hook = client.create_webhook(endpoint_url, events=WEBHOOK_EVENTS)
+            if not hook.get('secret'):
+                client.delete_webhook(hook.get('id'))
+                return False, _('BTCPay did not return a webhook secret.')
+        except GreenfieldError as error:
+            return False, str(error)
+        # 3) store the new credentials
+        self.with_context(btcpay_skip_webhook_sync=True).write({
+            'btcpay_api_key': api_key,
+            'btcpay_store_id': store_id,
+            'btcpay_webhook_id': hook.get('id'),
+            'btcpay_webhook_secret': hook.get('secret'),
+            'btcpay_store_name': store.get('name'),
+            'btcpay_connection_status': _(
+                '✅ Connected via setup wizard: store "%s".', store.get('name')),
+        })
+        # 4) best-effort cleanup of the old webhook
+        warning = None
+        if old['btcpay_webhook_id'] and old['btcpay_webhook_id'] != 'manual' \
+                and old['btcpay_api_key'] and old['btcpay_store_id']:
+            old_client = GreenfieldClient(
+                host=self.btcpay_location,
+                api_key=old['btcpay_api_key'],
+                store_id=old['btcpay_store_id'])
+            try:
+                old_client.delete_webhook(old['btcpay_webhook_id'])
+            except GreenfieldError as error:
+                warning = _(
+                    'The previous webhook %s could not be deleted on store %s '
+                    '(%s) - remove it manually in the store settings.',
+                    old['btcpay_webhook_id'], old['btcpay_store_id'], error)
+        self._btcpay_update_status(
+            webhook=_('Registered: %s', endpoint_url))
+        return True, warning or _('Connected to store "%s".', store.get('name'))
 
     def _btcpay_update_status(self, connection=None, webhook=None, store_name=False):
         """Persist status texts without re-triggering the webhook sync."""
@@ -162,6 +298,28 @@ class PaymentProvider(models.Model):
         return True, message
 
     # === BUTTON ACTIONS === #
+
+    def action_btcpay_open_authorize(self):
+        """Open the BTCPay api-keys/authorize page in a new browser tab.
+
+        The callback (/payment/btcpay/authorize) receives the API key and
+        applies the credentials atomically; the user is sent back here.
+        Important: the provider record must be saved first so the id exists
+        and the state token is meaningful.
+        """
+        self.ensure_one()
+        if self.code != 'btcpayserver':
+            raise UserError(_('This action is specific to the BTCPay provider.'))
+        if not self.btcpay_location:
+            raise UserError(_('Set the BTCPay Server URL first.'))
+        url = self._btcpay_authorize_url()
+        if not url:
+            raise UserError(_('Could not build the BTCPay authorization URL.'))
+        return {
+            'type': 'ir.actions.act_url',
+            'url': url,
+            'target': 'new',
+        }
 
     def action_btcpay_test_connection(self):
         self.ensure_one()

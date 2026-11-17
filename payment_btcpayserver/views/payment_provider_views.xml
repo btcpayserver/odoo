@@ -17,7 +17,13 @@
                     <field name="btcpay_store_name" readonly="1" invisible="not btcpay_store_name"/>
                     <field name="btcpay_connection_status" readonly="1" invisible="not btcpay_connection_status"/>
                     <field name="btcpay_webhook_status" readonly="1" invisible="not btcpay_webhook_status"/>
+                    <field name="btcpay_authorize_url" invisible="1"/>
                     <div colspan="2">
+                        <button name="action_btcpay_open_authorize" type="object"
+                                string="Connect BTCPay Server" icon="fa-magic"
+                                class="btn-primary"
+                                help="Opens BTCPay in a new tab to authorize Odoo on one of your stores. Returns automatically and completes the setup."
+                                invisible="not btcpay_location"/>
                         <button name="action_btcpay_test_connection" type="object"
                                 string="Test Connection" icon="fa-plug"
                                 class="btn-secondary"
