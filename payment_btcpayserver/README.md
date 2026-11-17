@@ -2,7 +2,7 @@
 
 ## This is the module to connect Odoo 20 and BTCPay Server (Greenfield API)
 This module allows you to accept bitcoin (and other cryptocurrency) payments in your Odoo e-commerce store.  
-![BTCPay Server Banner](BTCPay-Odoo-17-featured.png)
+![BTCPay Server Banner](static/description/BTCPay-Odoo-17-featured.png)
 
 :::tip
 **Using an older Odoo version?** Branches `18.0` and `19.0` are maintained in
@@ -18,6 +18,12 @@ not compatible — reconnect the provider once after updating (see
 [Upgrading from the legacy pairing setup](#upgrading-from-the-legacy-pairing-setup)).
 Existing transactions keep working; the module can still read invoices
 created before the switch.
+
+Version guidance by release:
+* **v20.0.1.0** ([release](https://github.com/btcpayserver/odoo/releases/tag/v20.0.1.0))
+  still uses the **legacy BitPay API** with pairing codes — same setup as
+  Odoo 18/19, no reconnect needed after upgrading from v1.x.
+* **v20.0.2.0+** requires the new **Greenfield setup** (this document).
 :::
 
 ## Install the module
@@ -42,30 +48,30 @@ need the URL of your BTCPay Server instance:
    Server URL** to your test or live BTCPay Server URL including https://
    (example: `https://testnet.demo.btcpayserver.org`).
 
-   ![Provider configuration form](BTCPayProviderConfig.png)
+   ![Provider configuration form](static/description/BTCPayProviderConfig.png)
 
 2. Make sure the provider is **saved** (the button needs the record id).
 3. Click **Connect BTCPay Server** — a new browser tab opens on your BTCPay
    Server asking you to **select the store** the key will be granted for:
 
-   ![Store selection](BTCPayAuthorizeSelectStore.png)
+   ![Store selection](static/description/BTCPayAuthorizeSelectStore.png)
 
 4. Click **Continue**, review the requested permissions and click
    **Authorize app**. The pre-filled label (e.g. "Odoo 20 2026-11-17") helps
    you identify the key later in your BTCPay account.
 
-   ![Permissions](BTCPayAuthorizePermissions.png)
+   ![Permissions](static/description/BTCPayAuthorizePermissions.png)
 
 5. BTCPay generates the API key and sends you back to Odoo. You land on a
    confirmation page showing the connected store:
 
-   ![Wizard success page](BTCPayWizardSuccess.png)
+   ![Wizard success page](static/description/BTCPayWizardSuccess.png)
 
 6. Click **Continue to Odoo** (you may need to log in again — the session
    cookie is not sent across the BTCPay redirect). The provider now shows
    the store name, the connection status and the registered webhook:
 
-   ![Connected provider](BTCPayProviderConnected.png)
+   ![Connected provider](static/description/BTCPayProviderConnected.png)
 
 7. Click **Test Connection**: both status fields (connection and webhook)
    should show a green check.
@@ -107,7 +113,7 @@ Check the payment method is enabled:
 
 Congrats, all done. Do some testing to be sure all works.
 
-![Payment page example](BTCPayLooksLike.png)
+![Payment page example](static/description/BTCPayLooksLike.png)
 
 ## Upgrading from the legacy pairing setup
 
@@ -146,7 +152,7 @@ In transaction object, you will find more technical information about this metho
 * Invoice Id: the id of the BTCPay invoice
 * Transaction Status: invoice status, including edge cases like `Expired/PaidPartial` (payment arrived after expiry) or `Settled/PaidOver` (customer overpaid) — these cases are flagged for manual review and never auto-confirm an order
 
-![Transaction details of BTCPay](BtcpayTxDetails.png)
+![Transaction details of BTCPay](static/description/BtcpayTxDetails.png)
 
 ## Troubleshooting
 ### The order and transaction status does not get updated to "paid"

@@ -5,10 +5,14 @@ This odoo addon allows you to accept bitcoin and Lightning Network (and other cr
 ![BTCPay Server Banner](https://raw.githubusercontent.com/btcpayserver/odoo/20.0/payment_btcpayserver/static/description/BTCPay-Odoo-17-featured.png)
 
 :::warning
-**Odoo 20 v2.0 uses the BTCPay Greenfield API** (API key + store id + signed
-webhooks) — a breaking change for existing v1.x users, who need to reconnect
-the provider once after upgrading. Branches `18.0`/`19.0` stay on the legacy
-BitPay API with pairing codes; `16.0`/`17.0` are end-of-life.
+**Odoo 20 version guidance:** release
+[v20.0.1.0](https://github.com/btcpayserver/odoo/releases/tag/v20.0.1.0) still
+uses the **legacy BitPay API** with pairing codes (same setup as Odoo 18/19 —
+no reconnect needed when upgrading from v1.x). From release
+**v20.0.2.0** on, the branch uses the **BTCPay Greenfield API** (API key +
+store id + signed webhooks) — a breaking change for existing v1.x users, who
+need to reconnect the provider once after upgrading. Branches `18.0`/`19.0`
+stay on the legacy BitPay API; `16.0`/`17.0` are end-of-life.
 :::
 
 ## How to install
