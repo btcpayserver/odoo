@@ -420,6 +420,10 @@ class PaymentProvider(models.Model):
                 'message': _('Connection OK: store "%s". %s', store.get('name'), webhook_message),
                 'type': 'success' if exists else 'warning',
                 'sticky': False,
+                'next': {
+                    'type': 'ir.actions.client',
+                    'tag': 'reload',
+                },
             },
         }
 
@@ -438,6 +442,10 @@ class PaymentProvider(models.Model):
                 'message': message,
                 'type': 'success' if ok else 'danger',
                 'sticky': not ok,
+                'next': {
+                    'type': 'ir.actions.client',
+                    'tag': 'reload',
+                },
             },
         }
 
@@ -478,6 +486,10 @@ class PaymentProvider(models.Model):
                 'message': warning or _('Provider disconnected.'),
                 'type': 'warning' if warning else 'success',
                 'sticky': bool(warning),
+                'next': {
+                    'type': 'ir.actions.client',
+                    'tag': 'reload',
+                },
             },
         }
 
