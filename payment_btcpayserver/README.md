@@ -147,6 +147,33 @@ Notes:
   with the old pairing flow, the credentials are discarded on upgrade — run
   the wizard again.
 
+## Refunds
+The provider supports full and partial refunds out of the box (Odoo adds a
+**Refund** action on confirmed transactions). Configure what a full refund
+pays out with **Refund Variant** in the provider's Configuration tab:
+
+* **Fiat** (default): the invoice currency (e.g. EUR 100) at the rate when
+  the refund is sent — the customer carries the rate risk.
+* **RateThen**: the crypto amount at the rate when the invoice was paid.
+* **CurrentRate**: the crypto amount at the current rate.
+
+Partial refunds always use a custom amount in the transaction currency.
+
+How BTCPay refunds work:
+
+1. The refund creates a **pull payment** on your store; the refund
+   transaction in Odoo stays *pending*.
+2. **Send the Refund Claim Link** (shown on the refund transaction) to your
+   customer — they open it and enter a destination (on-chain address or
+   Lightning) to claim the money. BTCPay does not send the link itself.
+3. When the store pays out the claim, the payout webhooks move the refund
+   transaction to *done* automatically (progress updates are shown in the
+   transaction's state message). If a payout is cancelled in BTCPay, the
+   refund transaction stays pending — handle it manually.
+
+The API key needs the `btcpay.store.cancreatenonapprovedpullpayments`
+permission, which the setup wizard grants by default.
+
 ## Provider maintenance
 * **Test Connection** verifies the API key, its permissions and store
   scoping, and the webhook at once; shows the BTCPay store name.
