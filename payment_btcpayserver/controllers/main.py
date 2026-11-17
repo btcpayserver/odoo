@@ -19,6 +19,7 @@
 #
 # ******************************************************************************
 
+import html as html_lib
 import json
 
 from werkzeug import urls
@@ -32,6 +33,66 @@ from ..models.libs.greenfield_client import GreenfieldClient
 
 
 _logger = get_payment_logger(__name__)
+
+_WEBHOOK_PATH = '/payment/btcpay/webhook'
+
+
+def _btcpay_wizard_result_page(success, message, provider):
+    """Standalone result page of the api-keys/authorize wizard.
+
+    Served without a session on purpose: the user sees immediately whether
+    the connection worked, before (re-)logging into the backend. The
+    continue button deep-links to the provider form, which after the login
+    opens exactly the record that was configured.
+    """
+    if provider is not None and provider.exists():
+        action = request.env.ref('payment.action_payment_provider', raise_if_not_found=False)
+        continue_url = urls.url_join(
+            request.httprequest.url_root,
+            f'/odoo/action-{action.id}/{provider.id}' if action else '/odoo')
+        store_line = f'<p>Store: <strong>{provider.btcpay_store_id or "-"}</strong></p>' \
+            if provider.btcpay_store_id else ''
+    else:
+        continue_url = urls.url_join(request.httprequest.url_root, '/odoo')
+        store_line = ''
+    icon, color = ('✅', '#017e84') if success else ('❌', '#c4392e')
+    title = _('BTCPay Server connected!') if success else _('BTCPay setup was not completed')
+    message = html_lib.escape(str(message))
+    store_line = html_lib.escape(store_line)
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>{title}</title>
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+               background: #f4f4f6; margin: 0; min-height: 100vh;
+               display: flex; align-items: center; justify-content: center; }}
+        .card {{ background: #fff; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,.08);
+                max-width: 460px; width: 90%; padding: 40px 36px; text-align: center; }}
+        .icon {{ font-size: 52px; line-height: 1; }}
+        h1 {{ font-size: 22px; margin: 18px 0 10px; color: #111; }}
+        p {{ color: #555; font-size: 14px; line-height: 1.5; margin: 6px 0; }}
+        a.btn {{ display: inline-block; margin-top: 22px; background: #714b67; color: #fff;
+                text-decoration: none; padding: 10px 22px; border-radius: 6px; font-size: 14px; }}
+        a.btn:hover {{ background: #5c3d55; }}
+        small {{ color: #999; display: block; margin-top: 16px; }}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon" style="color:{color}">{icon}</div>
+        <h1>{title}</h1>
+        <p>{message}</p>
+        {store_line}
+        <a class="btn" href="{continue_url}">Continue to Odoo</a>
+        <small>You may need to log in again — the session cookie is not sent
+               across the BTCPay redirect.</small>
+    </div>
+</body>
+</html>"""
+    return request.make_response(html, headers={'Content-Type': 'text/html; charset=utf-8'})
 
 
 class BTCPayController(http.Controller):
@@ -371,18 +432,19 @@ class BTCPayController(http.Controller):
         provider_id = httprequest.args.get('provider', type=int)
         state = httprequest.args.get('state')
 
-        def _back():
-            return request.redirect('/web#action=payment.action_payment_provider')
-
         if not api_key or not provider_id or not state:
             _logger.warning(
                 'BTCPay: wizard callback incomplete (method=%s, apiKey=%s, provider=%s)',
                 httprequest.method, bool(api_key), provider_id)
-            return _back()
+            return _btcpay_wizard_result_page(False, _(
+                'The BTCPay authorization callback is incomplete. Please start '
+                'the setup wizard again from the payment provider settings.'), None)
         provider = request.env['payment.provider'].sudo().browse(provider_id)
         if not provider.exists() or provider.code != 'btcpayserver':
             _logger.warning('BTCPay: wizard callback for unknown provider %s', provider_id)
-            return _back()
+            return _btcpay_wizard_result_page(False, _(
+                'The authorization refers to an unknown payment provider. Please '
+                'start the setup wizard again from the payment provider settings.'), None)
         # The state was signed over "<id>|<ts>|<callback base>"; the base is
         # the same URL the callback arrives on (scheme/host from the request).
         redirect_uri = urls.url_join(
@@ -391,8 +453,11 @@ class BTCPayController(http.Controller):
             _logger.warning(
                 'BTCPay: wizard callback state verification failed (provider %s)',
                 provider_id)
-            return _back()
+            return _btcpay_wizard_result_page(False, _(
+                'The authorization could not be verified (invalid or expired '
+                'signature). Please start the setup wizard again from the '
+                'payment provider settings.'), provider)
         ok, message = provider._btcpay_apply_wizard_credentials(api_key, permissions)
         _logger.info('BTCPay: wizard credentials applied for provider %s: ok=%s, %s',
                      provider.id, ok, message)
-        return _back()
+        return _btcpay_wizard_result_page(ok, message, provider)

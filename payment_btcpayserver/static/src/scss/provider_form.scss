@@ -17,4 +17,13 @@
             outline: none;
         }
     }
+
+    // keep the action buttons from sticking together
+    div > .btn {
+        margin-right: 0.5rem;
+
+        &:last-child {
+            margin-right: 0;
+        }
+    }
 }

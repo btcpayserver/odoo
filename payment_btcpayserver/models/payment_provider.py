@@ -57,6 +57,10 @@ class PaymentProvider(models.Model):
         string='Connection Status', readonly=True, copy=False)
     btcpay_webhook_status = fields.Char(
         string='Webhook Status', readonly=True, copy=False)
+    btcpay_show_manual = fields.Boolean(
+        string='Manual Setup', copy=False,
+        help='Reveal the API key / store id / webhook secret fields to enter '
+             'the credentials by hand instead of using the setup wizard.')
     btcpay_authorize_url = fields.Char(
         string='BTCPay Authorization URL', compute='_compute_btcpay_authorize_url',
         help='BTCPay page where the user authorizes Odoo to create invoices on '
@@ -459,6 +463,7 @@ class PaymentProvider(models.Model):
             'btcpay_webhook_secret': False,
             'btcpay_webhook_id': False,
             'btcpay_store_name': False,
+            'btcpay_show_manual': False,
             'btcpay_connection_status': _(
                 'Disconnected. Re-enter the credentials to connect again.'),
             'btcpay_webhook_status': webhook_status,
