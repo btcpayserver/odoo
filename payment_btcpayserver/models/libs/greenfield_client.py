@@ -23,6 +23,13 @@ WEBHOOK_EVENTS = [
     'InvoiceExpired',
     'InvoiceSettled',
     'InvoiceInvalid',
+    # Refund lifecycle: a refund creates a pull payment on the store; its
+    # payouts are claimed by the customer and then paid out. States travel
+    # AwaitingApproval -> AwaitingPayment -> InProgress -> Completed (or
+    # Cancelled); every change fires PayoutUpdated with the new state.
+    'PayoutCreated',
+    'PayoutApproved',
+    'PayoutUpdated',
 ]
 
 
@@ -60,9 +67,19 @@ class GreenfieldClient:
         if response.status_code >= 400:
             try:
                 detail = response.json()
-                model = (detail.get('model') or '').strip()
-                message = (detail.get('message') or '').strip()
-                detail = ' '.join(part for part in (model, message) if part) or str(detail)
+                if isinstance(detail, list):
+                    # Validation errors arrive as a list of problem details.
+                    detail = ' '.join(
+                        ' '.join(str(v) for v in item.values())
+                        if isinstance(item, dict) else str(item)
+                        for item in detail
+                    ).strip()
+                elif isinstance(detail, dict):
+                    model = (detail.get('model') or '').strip()
+                    message = (detail.get('message') or '').strip()
+                    detail = ' '.join(part for part in (model, message) if part) or str(detail)
+                else:
+                    detail = str(detail)
             except ValueError:
                 detail = response.text[:200]
             raise GreenfieldError(
@@ -83,6 +100,10 @@ class GreenfieldClient:
         """Fetch the configured store (connection test)."""
         return self._request('GET', self._store_path())
 
+    def get_store_payment_methods(self):
+        """List the store's payment/payout methods (e.g. BTC-CHAIN, BTC-LN)."""
+        return self._request('GET', self._store_path('/payment-methods'))
+
     # === INVOICES === #
 
     def create_invoice(self, amount, currency, metadata=None, checkout=None):
@@ -97,6 +118,23 @@ class GreenfieldClient:
 
     def get_invoice(self, invoice_id):
         return self._request('GET', self._store_path(f'/invoices/{invoice_id}'))
+
+    # === REFUNDS === #
+
+    def refund_invoice(self, invoice_id, payload):
+        """Create a refund pull payment for an invoice.
+
+        ``payload`` is a ``RefundInvoiceRequest``: ``refundVariant`` (Fiat,
+        RateThen, CurrentRate, OverpaidAmount or Custom) plus customAmount/
+        customCurrency for the Custom variant. Requires the
+        ``btcpay.store.cancreatenonapprovedpullpayments`` permission and a
+        refundable invoice (Settled). The response is a ``PullPaymentData``
+        whose ``viewLink`` is the claim link the customer must open to
+        actually receive the refund.
+        """
+        return self._request(
+            'POST', self._store_path(f'/invoices/{invoice_id}/refund'), payload,
+        )
 
     # === WEBHOOKS === #
 

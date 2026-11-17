@@ -349,6 +349,14 @@ class BTCPayController(http.Controller):
             return request.make_response('invalid signature', status=400)
 
         event_type = data.get('type') or ''
+        if event_type.startswith('Payout'):
+            # Refund lifecycle events: no invoiceId, matched via the pull
+            # payment id stored on the refund transaction.
+            try:
+                self._btcpay_process_payout_webhook(provider, data)
+            except ValidationError as error:
+                _logger.warning("BTCPay: rejected payout webhook: %s", error)
+            return ''
         incoming_invoice_id = data.get('invoiceId')
         if not incoming_invoice_id:
             # Events without an invoice (e.g. webhook test notifications).
@@ -397,6 +405,80 @@ class BTCPayController(http.Controller):
         except ValidationError as error:
             _logger.warning("BTCPay: rejected webhook: %s", error)
         return ''
+
+    @classmethod
+    def _btcpay_process_payout_webhook(cls, provider, data):
+        """Process a payout webhook for a refund pull payment.
+
+        BTCPay refunds are pull payments; the customer claims them and the
+        store then pays out. The refund transaction was created by
+        `_send_refund_request` with the pull payment id in
+        `provider_reference`, which is the only trusted lookup key here (the
+        payload is authenticated by the webhook signature, but the matching
+        must be done against stored data, not payload data).
+
+        Event shapes (top-level fields, verified against BTCPay Server's
+        PayoutTriggerProvider): ``type`` PayoutCreated/PayoutApproved/
+        PayoutUpdated, plus ``payoutId``, ``payoutState``
+        (AwaitingApproval/AwaitingPayment/InProgress/Completed/Cancelled) and
+        ``pullPaymentId``.
+
+        :param provider: The BTCPay provider the webhook was registered on.
+        :param dict data: The verified webhook payload.
+        :return: None
+        """
+        event_type = data.get('type') or ''
+        pull_payment_id = data.get('pullPaymentId')
+        payout_state = data.get('payoutState') or ''
+        if not pull_payment_id:
+            _logger.info(
+                "BTCPay: ignored webhook event %s (no pull payment id)",
+                event_type,
+            )
+            return
+        refund_txs = request.env['payment.transaction'].sudo().search([
+            ('provider_id', '=', provider.id),
+            ('operation', '=', 'refund'),
+            ('provider_reference', '=', pull_payment_id),
+        ])
+        if not refund_txs:
+            _logger.info(
+                "BTCPay: no refund transaction found for pull payment %s"
+                " (event %s)", pull_payment_id, event_type,
+            )
+            return
+
+        for refund_tx in refund_txs:
+            cls._lock_transaction(refund_tx)
+            _logger.info(
+                "BTCPay: payout webhook %s (%s) for refund transaction %s",
+                event_type, payout_state, refund_tx.reference,
+            )
+            if payout_state == 'Completed':
+                # Same write pattern as the payment data cron: locked record,
+                # payment_safe_write context.
+                refund_tx.with_context(payment_safe_write=True)._set_done(
+                    state_message="BTCPay: " + _(
+                        "Refund payout completed - the money was sent to the "
+                        "customer's claimed destination."))
+            else:
+                # Transactions have no chatter in Odoo 20: informational
+                # updates go into state_message, shown on the refund form.
+                # Only pending transactions track payout progress; a late
+                # event must not overwrite the final state's message.
+                if refund_tx.state == 'pending':
+                    message = {
+                        'Cancelled': _(
+                            "BTCPay: the refund payout was cancelled in "
+                            "BTCPay - handle it manually (e.g. recreate the "
+                            "payout on the store)."),
+                    }.get(payout_state) or _(
+                        "BTCPay: refund payout state update: %s (%s).",
+                        payout_state, event_type,
+                    )
+                    refund_tx.with_context(payment_safe_write=True).write({
+                        'state_message': message,
+                    })
 
     @http.route(_return_url, type='http', auth="public", methods=['GET'],
                 csrf=False, save_session=False)

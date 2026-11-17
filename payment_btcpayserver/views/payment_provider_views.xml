@@ -54,6 +54,10 @@
                     </div>
                     <field name="btcpay_authorize_url" invisible="1"/>
                 </group>
+                <group string="BTCPay Refunds" name="btcpay_refunds"
+                       colspan="2" invisible="code != 'btcpayserver'">
+                    <field name="btcpay_refund_variant" colspan="2"/>
+                </group>
             </group>
         </field>
     </record>

@@ -10,6 +10,8 @@
                 <field name="btcpay_txid"/>
                 <field name="btcpay_invoiceId" />
                 <field name="btcpay_status"/>
+                <field name="btcpay_refund_link" readonly="1"
+                       invisible="not btcpay_refund_link"/>
             </field>
         </field>
     </record>

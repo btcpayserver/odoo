@@ -65,8 +65,29 @@ class PaymentProvider(models.Model):
         string='BTCPay Authorization URL', compute='_compute_btcpay_authorize_url',
         help='BTCPay page where the user authorizes Odoo to create invoices on '
              'one store and manage the webhook. Redirects back with the API key.')
+    btcpay_refund_variant = fields.Selection(
+        selection=[
+            ('Fiat', 'Fiat - invoice currency, current rate at payout time'),
+            ('RateThen', 'RateThen - crypto amount at the rate when the invoice was paid'),
+            ('CurrentRate', 'CurrentRate - crypto amount at the current rate'),
+        ],
+        string='Refund Variant', default='Fiat', required=True,
+        help='What a full refund pays out. Fiat refunds the invoice currency '
+             '(e.g. EUR 100) at the rate when the refund is sent - the '
+             'customer carries the rate risk. RateThen/CurrentRate refund the '
+             'crypto amount the invoice was paid in. Partial refunds always '
+             'use a custom amount in the transaction currency.')
 
     # === COMPUTED === #
+
+    def _compute_feature_support_fields(self):
+        """ Override of payment to add the BTCPay-specific feature support.
+
+        The Greenfield API creates refunds as pull payments for any amount
+        (custom variant), so both full and partial refunds are supported.
+        """
+        super()._compute_feature_support_fields()
+        self.filtered(lambda p: p.code == 'btcpayserver').support_refund = 'partial'
 
     def _compute_btcpay_webhook_url(self):
         for provider in self:
