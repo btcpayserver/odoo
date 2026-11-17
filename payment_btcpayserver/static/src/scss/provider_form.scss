@@ -27,10 +27,12 @@
         }
     }
 
-    // the buttons div sits between inputs and status fields: give it air
+    // the buttons div sits between inputs and status fields: give it air;
+    // on narrow widths buttons wrap onto extra rows that also need air
     div[colspan="2"] {
         margin-top: 14px;
         margin-bottom: 8px;
+        row-gap: 8px;
     }
 
     // disconnect stays red: it deletes remote + local state

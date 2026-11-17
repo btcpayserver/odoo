@@ -40,12 +40,14 @@ In the BTCPay settings form, tab "Credentials":
   * Create a key with these permissions: `btcpay.store.canviewinvoices`, `btcpay.store.cancreateinvoice`, `btcpay.store.canmodifyinvoices`, `btcpay.store.webhooks.canmodifywebhooks`, `btcpay.store.canviewstoresettings`, `btcpay.store.cancreatenonapprovedpullpayments`
   * Make sure the key is bound to a single store ("selective store" / bound store)
 * Copy your store id: Store -> Settings -> General ("Store ID")
-* Back in Odoo: paste the **Store ID** and the **API Key**
-* **Save** — the module registers a webhook on the store automatically (the
-  "Webhook Status" field shows the registered endpoint). Alternatively create
-  the webhook manually in BTCPay (Store -> Settings -> Webhooks, point it to
-  `<your-odoo>/payment/btcpay/webhook`, all invoice events) and paste its
-  secret into "Webhook Secret".
+* Back in Odoo: enable "Manual Setup", then paste the **Store ID** and the **API Key**
+* **Save** — the module registers a webhook on the store automatically and
+  stores its secret (the "Webhook Status" field shows the webhook id). The
+  webhook secret is managed automatically and never needs manual entry; if
+  you prefer to create the webhook yourself in BTCPay (Store -> Settings ->
+  Webhooks, point it to `<your-odoo>/payment/btcpay/webhook`, all invoice
+  events), the module will still validate incoming calls against the secret
+  stored here — ask support in that case.
 * Click **Test Connection**: both status fields should show a green check
   (connection, store name and webhook are verified against your BTCPay server).
 
