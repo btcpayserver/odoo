@@ -15,6 +15,13 @@
         <p class="oe_mt32">
             BTCPay Server for Odoo is a revolutionary, self-hosted, open-source payment gateway to accept Bitcoin payments. Our seamless integration with Odoo allows you to connect your self-hosted BTCPay Server and start accepting Bitcoin payments in just a few simple steps.
         </p>
+        <p class="oe_mt32">
+            <strong>New in version v20.0.2.x (Odoo 20):</strong> the module now uses the modern
+            BTCPay <strong>Greenfield API</strong> with signed webhooks. Connect your store with the
+            built-in setup wizard — just enter your BTCPay Server URL and click "Connect BTCPay Server".
+            A detailed setup guide and upgrade notes for existing installations can be found in the
+            <a href="https://github.com/btcpayserver/odoo/blob/20.0/payment_btcpayserver/README.md">module documentation</a>.
+        </p>
     </div>
 </section>
 
@@ -26,29 +33,20 @@
                 <ul>
                 <li><strong>Zero fees</strong>: Enjoy a payment gateway with no fees. Yes, really!</li>
                 <li><strong>Fully automated system</strong>: BTCPay takes care of payments, invoice management and refunds automatically.</li>
+                <li><strong>One-click setup wizard</strong>: authorize Odoo on your BTCPay store, the API key and webhook are configured automatically.</li>
+                <li><strong>Signed webhooks</strong>: invoice status updates are verified with HMAC-SHA256 signatures.</li>
                 <li><strong>Display Bitcoin QR code at checkout</strong>: Enhance customer experience with an easy and secure payment option.</li>
                 <li><strong>No middlemen or KYC</strong>:
                 <ul>
                 <li>Direct, P2P payments (going directly to your wallet)</li>
                 <li>Say goodbye to intermediaries and tedious paperwork</li>
-                <li>Transaction information is only shared between you and your customer</li>
                 </ul>
                 </li>
                 <li><strong>Self-hosted infrastructure</strong>: Maintain full control over your payment gateway.</li>
                 <li><strong>Direct wallet payments</strong>: Be your own bank with a self-custodial service.</li>
                 <li><strong>Lightning Network</strong> integrated out of the box – instant, fast and low cost payments and payouts</li>
-                <li><strong>Reporting and accounting</strong> – CSV exports</li>
-                <li><strong>Advanced invoice managemen</strong>t and refunding integrated in the WooCommerce UI</li>
                 <li><strong>Real-time exchange price tracking</strong> for correct payment amounts</li>
-                <li><strong>Versatile plugin system</strong>:
-                <ul>
-                <li>Extend functionality according to your needs</li>
-                <li>Accept payments in altcoins through various plugins</li>
-                </ul>
-                </li>
                 <li><strong>Elegant checkout design</strong>: Compatible with all Bitcoin wallets and enhanced with your store’s logo and branding for a unique UX.</li>
-                <li><strong>Point-of-sale</strong> integration – Accept payments in your physical shops</li>
-                <li><strong>Multilingual ready</strong>: Serve a global audience right out of the box.</li>
                 <li><strong>Top-notch privacy and security</strong>: Protect your and your customers’ data.</li>
                 <li><strong>Community-driven support</strong>: Get responsive assistance from our dedicated community (<a href="http://chat.btcpayserver.org" rel="nofollow ugc">Mattermost</a> or <a href="https://t.me/btcpayserver" rel="nofollow ugc">Telegram</a>).</li>
                 </ul>
@@ -57,19 +55,17 @@
     </div>
 </section>
 
-
-
 <section class="oe_container">
     <div class="oe_row oe_spaced">
         <h2 class="oe_slogan">Requirements</h2>
         <div class="oe_span12">
             <p class="oe_mt32">
                 <ul>
-                    <li>Odoo 17 running</li> 
+                    <li>Odoo 20 running</li>
                     <li>eCommerce module enabled</li>
                     <li>You have a BTCPay Server version 1.10.0 or later, either <a href="https://docs.btcpayserver.org/Deployment/">self-hosted</a> or <a href="https://docs.btcpayserver.org/Deployment/ThirdPartyHosting/">hosted by a third-party</a></li>
-                    <li><a href="https://docs.btcpayserver.org/RegisterAccount/" class="">You've a registered account on the instance</a></li> 
-                    <li><a href="https://docs.btcpayserver.org/CreateStore/" class="">You've a BTCPay store on the instance</a></li> 
+                    <li><a href="https://docs.btcpayserver.org/RegisterAccount/" class="">You've a registered account on the instance</a></li>
+                    <li><a href="https://docs.btcpayserver.org/CreateStore/" class="">You've a BTCPay store on the instance</a></li>
                     <li><a href="https://docs.btcpayserver.org/WalletSetup/" class="">You've a wallet connected to your store</a></li>
                 </ul>
             </p>
@@ -83,15 +79,19 @@
         <div class="oe_span12">
             <p class="oe_mt32">
                 <ul>
-                    <li>Clone our [repository](https://github.com/btcpayserver/odoo) or download the .zip from the [releases page](https://github.com/btcpayserver/odoo/releases)
-                    <li>Make sure you are on branch `17.0` or downloaded a release tagged with version v17.x
-                    <li>Place the `payment_btcpayserver` directory in your Odoo addons directory
-                    <li>Install dependencies by running `pip install -r requirements.txt` (from inside the `payment_btcpayserver` directory)
-                    <li>Restart Odoo
-                    <li>Go to Apps -> Update Apps List
-                    <li>Remove the "Apps" filter and search for "btcpay"
-                    <li>Click **Activate** button
+                    <li>Clone our <a href="https://github.com/btcpayserver/odoo">repository</a> or download the .zip from the <a href="https://github.com/btcpayserver/odoo/releases">releases page</a></li>
+                    <li>Make sure you are on branch <code>20.0</code> or downloaded a release tagged with version v20.x</li>
+                    <li>Place the <code>payment_btcpayserver</code> directory in your Odoo addons directory</li>
+                    <li>Restart Odoo</li>
+                    <li>Go to Apps -&gt; Update Apps List</li>
+                    <li>Remove the "Apps" filter and search for "btcpay"</li>
+                    <li>Click <strong>Activate</strong> button</li>
                 </ul>
+            </p>
+            <p class="oe_mt32">
+                The full installation and configuration instructions — including the setup wizard and
+                upgrade notes for v20.0.1.x installations — are in the
+                <a href="https://github.com/btcpayserver/odoo/blob/20.0/payment_btcpayserver/README.md">module documentation</a>.
             </p>
         </div>
     </div>
@@ -100,51 +100,26 @@
 <section class="oe_container">
     <div class="oe_row oe_spaced">
         <h2 class="oe_slogan">Configure BTCPay as payment provider</h2>
-        <div class="oe_span6">
+        <div class="oe_span12">
             <p class="oe_mt32">
                 <ul>
-                    <li>Go to <strong>Website</strong> -> <strong>Configuration</strong> -> <strong>Payment Providers</strong></li>
+                    <li>Go to <strong>Website</strong> -&gt; <strong>Configuration</strong> -&gt; <strong>Payment Providers</strong></li>
                     <li>Search for BTCPay and click on button <strong>Activate</strong></li>
+                    <li>In the BTCPay settings form, tab "Credentials": set the <strong>BTCPay Server URL</strong> (e.g. <a href="https://testnet.demo.btcpayserver.org">https://testnet.demo.btcpayserver.org</a>), <strong>save</strong> the record, then click <strong>Connect BTCPay Server</strong></li>
+                    <li>On your BTCPay Server: select the store, review the permissions and click <strong>Authorize app</strong> — Odoo receives the API key, registers the webhook and shows the connection status</li>
+                    <li>Click <strong>Test Connection</strong>: both status fields should show a green check</li>
+                    <li>On the tab "Configuration": make sure field "Payment Journal" is set to "Bank", then <strong>save</strong> the settings</li>
                 </ul>
-
-                <p>In the BTCPay settings form, tab "Credentials":</p>
-                <ul>
-                    <li>Set field "State" to enabled</li>
-                    <li>Set field "BTCPay Server URL" as test or live URL including https://. Example URL: <a href="https://testnet.demo.btcpayserver.org">https://testnet.demo.btcpayserver.org</a></li>
-                    <li>Get a pairing code from your BTCPay Server store: Settings -> Access Tokens
-                        <ul>
-                            <li>Click on "Create Token" button</li>
-                            <li>Label: enter e.g. "My odoo store"</li>
-                            <li>Public Key: leave empty</li>
-                            <li>Click on "Request Pairing" button, on next page click "Approve" button</li>
-                            <li>At the top copy the code next to "Server initiated pairing code", e.g. "hg7z8wN"</li>
-                        </ul>
-                    </li>
-                    <li>Back in Odoo, paste the code into "Pairing Code" field</li>
-                    <li>Hit Tab key on your keyboard (or click on another field) and the pairing process will start automatically</li>
-                    <li>When the pairing is successful the "Token" and "Private Key" field will be filled automatically</li>
-                    <li>Field Facade, keep default 'merchant'.</li>
-                </ul>
-
-                <p>On the tab "Configuration":</p>
-                <ul>
-                    <li>Make sure field "Payment Journal" is set to "Bank", otherwise you can click the dropdown and click on the suggestion "Bank"</li>
-                    <li>Now you can <strong>save</strong> the settings</li>
-                </ul>
-
-                <p>Check the payment method is enabled:</p>
-                <ul>
-                    <li>Go to <strong>Website</strong> -> <strong>Configuration</strong> -> <strong>Payment Methods</strong></li>
-                    <li>Make sure "Pay with Bitcoin / Lightning Network" is active</li>
-                </ul>
-
-                <p>Congrats, all done. Do some testing to be sure all works.</p>
-
+            </p>
+            <p class="oe_mt32">
+                A manual setup (API key + store id pasted by hand) is described in the
+                <a href="https://github.com/btcpayserver/odoo/blob/20.0/payment_btcpayserver/README.md">module documentation</a>.
+                Full screenshots of every step are included there as well.
             </p>
         </div>
         <div class="oe_span6">
             <div class="oe_bg_img">
-                <img src="BTCPayPaymentSettings.png" class="oe_picture oe_screenshot">
+                <img src="BTCPayProviderConfig.png" class="oe_picture oe_screenshot">
             </div>
         </div>
     </div>
@@ -152,7 +127,7 @@
 
 <section class="oe_container">
     <div class="oe_row oe_spaced">
-        <h2 class="oe_slogan">How it looks like?</h2>  
+        <h2 class="oe_slogan">How it looks like?</h2>
         <div class="oe_span6">
             <div class="oe_bg_img">
                 <img src="BTCPayLooksLike.png" class="oe_picture oe_screenshot">
@@ -171,14 +146,14 @@
 
 <section class="oe_container">
     <div class="oe_row oe_spaced">
-        <h2 class="oe_slogan">Transaction BTCPay Details</h2>  
+        <h2 class="oe_slogan">Transaction BTCPay Details</h2>
         <div class="oe_span6">
             <p class="oe_mt32">
                 <ul>
                     In transaction object, you will find more technical information about this method of payment:
-                    <li>Transaction Id: cryptocurrency transaction hash for the executed payout.</li>
-                    <li>Invoice Id: the id of the invoice for which you want to fetch an event token</li>
-                    <li>Transaction Status: That indicates state of transaction</li>
+                    <li>Transaction Id: link to the BTCPay invoice</li>
+                    <li>Invoice Id: the id of the BTCPay invoice</li>
+                    <li>Transaction Status: invoice status, including edge cases like Expired/PaidPartial or Settled/PaidOver</li>
                 </ul>
             </p>
         </div>

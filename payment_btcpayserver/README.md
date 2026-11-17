@@ -133,9 +133,16 @@ the provider once:
 
 Notes:
 
-* **In-flight checkouts keep working**: invoices created before the switch
-  can still be read through the Greenfield API and their payments are
-  processed normally.
+* **Payments on invoices created before the switch:** the old legacy IPN
+  endpoint no longer exists in v20.0.2.x, so BTCPay's legacy notifications
+  for those invoices will fail. As long as the customer stays on the
+  BTCPay checkout page, the redirect back to Odoo still resolves the
+  payment (the module fetches the invoice through the Greenfield API and
+  processes it). Payments that settle *after* the customer left the page
+  are only picked up once the new Greenfield webhook is registered (which
+  happens automatically during the wizard) — BTCPay redelivers pending
+  webhook events for a while, but to be safe check open transactions after
+  upgrading.
 * **Manual connections need a click too**: if you connected the provider
   with the old pairing flow, the credentials are discarded on upgrade — run
   the wizard again.
