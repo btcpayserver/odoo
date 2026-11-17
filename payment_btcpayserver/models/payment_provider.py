@@ -235,7 +235,7 @@ class PaymentProvider(models.Model):
                     '(%s) - remove it manually in the store settings.',
                     old['btcpay_webhook_id'], old['btcpay_store_id'], error)
         self._btcpay_update_status(
-            webhook=_('Registered: %s', endpoint_url))
+            webhook=_('Registered (webhook id: %s).', hook.get('id')))
         return True, warning or _('Connected to store "%s".', store.get('name'))
 
     def _btcpay_update_status(self, connection=None, webhook=None, store_name=False):
@@ -253,13 +253,14 @@ class PaymentProvider(models.Model):
     def _btcpay_check_webhook_exists(self, client):
         """Verify the stored webhook still exists server-side and points at us.
 
-        :return: (exists: bool, message: str)
+        :return: (exists: bool, message: str) — the message names the webhook
+                 id (the endpoint URL is shown by the dedicated field).
         """
         self.ensure_one()
         if not self.btcpay_webhook_id:
             return False, _('No webhook registered yet.')
         if self.btcpay_webhook_id == 'manual':
-            return True, _('Manual webhook (created in the BTCPay UI).')
+            return True, _('Registered (manual webhook, created in the BTCPay UI).')
         try:
             hook = client.get_webhook(self.btcpay_webhook_id)
         except GreenfieldError as error:
@@ -272,7 +273,7 @@ class PaymentProvider(models.Model):
                 'The webhook on the BTCPay store points to a different URL: %s',
                 hook.get('url'),
             )
-        return True, _('Registered: %s', hook.get('url'))
+        return True, _('Registered (webhook id: %s).', hook.get('id'))
 
     def _btcpay_ensure_webhook(self, force=False):
         """Idempotent webhook registration (create only when needed).
@@ -317,7 +318,7 @@ class PaymentProvider(models.Model):
             'btcpay_webhook_id': hook.get('id'),
             'btcpay_webhook_secret': secret,
         })
-        message = _('Registered: %s', endpoint_url)
+        message = _('Registered (webhook id: %s).', hook.get('id'))
         if manual:
             message += _(' (the previous manual webhook must be removed in the BTCPay UI if still present)')
         return True, message
@@ -465,7 +466,8 @@ class PaymentProvider(models.Model):
             'btcpay_store_name': False,
             'btcpay_show_manual': False,
             'btcpay_connection_status': _(
-                'Disconnected. Re-enter the credentials to connect again.'),
+                'Enter the BTCPay Server URL and click "Connect BTCPay Server", '
+                'or enable Manual Setup and enter the credentials by hand.'),
             'btcpay_webhook_status': webhook_status,
         })
         return {

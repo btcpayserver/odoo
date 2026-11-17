@@ -50,15 +50,15 @@ def _btcpay_wizard_result_page(success, message, provider):
         continue_url = urls.url_join(
             request.httprequest.url_root,
             f'/odoo/action-{action.id}/{provider.id}' if action else '/odoo')
-        store_line = f'<p>Store: <strong>{provider.btcpay_store_id or "-"}</strong></p>' \
-            if provider.btcpay_store_id else ''
+        store_line = provider.btcpay_store_id or ''
     else:
         continue_url = urls.url_join(request.httprequest.url_root, '/odoo')
         store_line = ''
     icon, color = ('✅', '#017e84') if success else ('❌', '#c4392e')
     title = _('BTCPay Server connected!') if success else _('BTCPay setup was not completed')
     message = html_lib.escape(str(message))
-    store_line = html_lib.escape(store_line)
+    store_id = html_lib.escape(store_line)
+    store_html = f'<p>Store: <strong>{store_id}</strong></p>' if store_id else ''
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -85,7 +85,7 @@ def _btcpay_wizard_result_page(success, message, provider):
         <div class="icon" style="color:{color}">{icon}</div>
         <h1>{title}</h1>
         <p>{message}</p>
-        {store_line}
+        {store_html}
         <a class="btn" href="{continue_url}">Continue to Odoo</a>
         <small>You may need to log in again — the session cookie is not sent
                across the BTCPay redirect.</small>

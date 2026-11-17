@@ -18,11 +18,6 @@
                            invisible="not btcpay_show_manual and not btcpay_store_id and not btcpay_api_key"/>
                     <field name="btcpay_webhook_secret" password="True"
                            invisible="not btcpay_show_manual and not btcpay_store_id and not btcpay_webhook_secret"/>
-                    <field name="btcpay_webhook_url" readonly="1"/>
-                    <field name="btcpay_store_name" readonly="1" invisible="not btcpay_store_name"/>
-                    <field name="btcpay_connection_status" readonly="1" invisible="not btcpay_connection_status"/>
-                    <field name="btcpay_webhook_status" readonly="1" invisible="not btcpay_webhook_status"/>
-                    <field name="btcpay_authorize_url" invisible="1"/>
                     <div colspan="2">
                         <button name="action_btcpay_open_authorize" type="object"
                                 string="Connect BTCPay Server" icon="open_in_new"
@@ -39,10 +34,15 @@
                                 invisible="not btcpay_store_id or not btcpay_api_key"/>
                         <button name="action_btcpay_disconnect" type="object"
                                 string="Disconnect" icon="link_off"
-                                class="btn-secondary"
+                                class="btn-secondary o_btcpay_disconnect"
                                 confirm="This deletes the webhook on the BTCPay store (if possible) and clears all stored credentials. Continue?"
                                 invisible="not btcpay_store_id and not btcpay_api_key"/>
                     </div>
+                    <field name="btcpay_webhook_url" readonly="1"/>
+                    <field name="btcpay_store_name" readonly="1" invisible="not btcpay_store_name"/>
+                    <field name="btcpay_connection_status" readonly="1" invisible="not btcpay_connection_status"/>
+                    <field name="btcpay_webhook_status" readonly="1" invisible="not btcpay_webhook_status"/>
+                    <field name="btcpay_authorize_url" invisible="1"/>
                 </group>
             </group>
         </field>

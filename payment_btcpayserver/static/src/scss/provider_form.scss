@@ -26,4 +26,21 @@
             margin-right: 0;
         }
     }
+
+    // the buttons div sits between inputs and status fields: give it air
+    div[colspan="2"] {
+        margin-top: 8px;
+        margin-bottom: 8px;
+    }
+
+    // disconnect stays red: it deletes remote + local state
+    .o_btcpay_disconnect {
+        color: #c4392e;
+        border-color: #c4392e;
+
+        &:hover {
+            background-color: #c4392e;
+            color: #fff;
+        }
+    }
 }
