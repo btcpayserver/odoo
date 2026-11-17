@@ -147,7 +147,13 @@ class GreenfieldClient:
             'automaticRedelivery': automatic_redelivery,
         }
         if events:
-            payload['specificEvents'] = list(events)
+            # The API model expects authorizedEvents.specificEvents; a bare
+            # top-level "specificEvents" key is silently ignored and the
+            # webhook falls back to authorizedEvents.everything=true.
+            payload['authorizedEvents'] = {
+                'everything': False,
+                'specificEvents': list(events),
+            }
         return self._request('POST', self._store_path('/webhooks'), payload)
 
     def delete_webhook(self, webhook_id):
