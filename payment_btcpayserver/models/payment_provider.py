@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import time
 
 from werkzeug import urls
 
@@ -117,20 +118,40 @@ class PaymentProvider(models.Model):
         return f"{self.btcpay_location.rstrip('/')}/api-keys/authorize?{urls.url_encode(query)}"
 
     def _btcpay_wizard_state_sign(self, callback_base):
-        """HMAC-sign ``<id>|<callback base url>``; the callback re-verifies it."""
+        """Build the signed wizard state for this provider.
+
+        Format: ``<unix-ts>.<hex hmac>`` where the HMAC covers
+        ``<id>|<ts>|<callback base url>``. The timestamp lets the callback
+        reject stale states (the state travels in the redirect URL and could
+        leak via referrers; a captured state must only be usable for a short
+        window around the wizard run).
+        """
         self.ensure_one()
         secret = self.env['ir.config_parameter'].sudo().get_str('database.secret')
-        payload = f'{self.id}|{callback_base}'
-        return hmac.new(
+        ts = int(time.time())
+        payload = f'{self.id}|{ts}|{callback_base}'
+        signature = hmac.new(
             secret.encode('utf-8'), payload.encode('utf-8'), hashlib.sha256,
         ).hexdigest()
+        return f'{ts}.{signature}'
 
-    def _btcpay_wizard_state_verify(self, redirect_uri, state):
+    def _btcpay_wizard_state_verify(self, callback_base, state, max_age=900):
+        """Verify a wizard state token (format ``<ts>.<hmac>``, max_age seconds)."""
         self.ensure_one()
-        if not state:
+        if not state or '.' not in state:
             return False
-        expected = self._btcpay_wizard_state_sign(redirect_uri)
-        return hmac.compare_digest(expected, state)
+        ts_part, _, signature = state.partition('.')
+        if not ts_part.isdigit():
+            return False
+        ts = int(ts_part)
+        if abs(int(time.time()) - ts) > max_age:
+            return False
+        secret = self.env['ir.config_parameter'].sudo().get_str('database.secret')
+        payload = f'{self.id}|{ts}|{callback_base}'
+        expected = hmac.new(
+            secret.encode('utf-8'), payload.encode('utf-8'), hashlib.sha256,
+        ).hexdigest()
+        return hmac.compare_digest(expected, signature)
 
     def _btcpay_apply_wizard_credentials(self, api_key, permissions):
         """Atomically swap in wizard credentials (MIGRATION-GREENFIELD.md §Phase 2).

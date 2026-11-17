@@ -344,8 +344,8 @@ class BTCPayController(http.Controller):
         _logger.info("BTCPay: user returned to shop after payment")
         return request.redirect('/payment/status')
 
-    @http.route('/payment/btcpay/authorize', type='http', auth='user',
-                methods=['POST'], csrf=False, save_session=True)
+    @http.route('/payment/btcpay/authorize', type='http', auth='public',
+                methods=['GET', 'POST'], csrf=False, save_session=True)
     def btcpay_authorize_callback(self, **post):
         """ Callback of the BTCPay api-keys/authorize wizard (Phase 2).
 
@@ -354,31 +354,39 @@ class BTCPayController(http.Controller):
         (store-scoped, e.g. ``btcpay.store.canviewinvoices:<storeId>``).
         Provider identity and the signed state travel in the redirect URL's
         query string (BTCPay does not echo query params back in the form).
-        The credentials are applied atomically; on any failure the previous
-        configuration is untouched.
+
+        This route must NOT require a user session: the POST originates from
+        the BTCPay server's page (cross-site), so the browser does not send
+        the Odoo session cookie (SameSite=Lax default). Authenticity comes
+        exclusively from the HMAC state token issued when the wizard
+        started; the credentials are applied atomically and on any failure
+        the previous configuration is untouched.
         """
-        api_key = post.get('apiKey')
-        permissions = request.httprequest.form.getlist('permissions[]') \
-            or request.httprequest.form.getlist('permissions')
-        provider_id = request.httprequest.args.get('provider', type=int)
-        state = request.httprequest.args.get('state')
+        httprequest = request.httprequest
+        api_key = post.get('apiKey') or httprequest.args.get('apiKey')
+        permissions = (httprequest.form.getlist('permissions[]')
+                       or httprequest.args.getlist('permissions[]')
+                       or httprequest.form.getlist('permissions')
+                       or httprequest.args.getlist('permissions'))
+        provider_id = httprequest.args.get('provider', type=int)
+        state = httprequest.args.get('state')
 
         def _back():
             return request.redirect('/web#action=payment.action_payment_provider')
 
         if not api_key or not provider_id or not state:
             _logger.warning(
-                'BTCPay: wizard callback incomplete (apiKey=%s, provider=%s)',
-                bool(api_key), provider_id)
+                'BTCPay: wizard callback incomplete (method=%s, apiKey=%s, provider=%s)',
+                httprequest.method, bool(api_key), provider_id)
             return _back()
         provider = request.env['payment.provider'].sudo().browse(provider_id)
         if not provider.exists() or provider.code != 'btcpayserver':
             _logger.warning('BTCPay: wizard callback for unknown provider %s', provider_id)
             return _back()
-        # The state was signed over "<id>|<redirect base>"; the base is the
-        # same URL the callback arrives on (scheme/host from the request).
+        # The state was signed over "<id>|<ts>|<callback base>"; the base is
+        # the same URL the callback arrives on (scheme/host from the request).
         redirect_uri = urls.url_join(
-            request.httprequest.url_root, self._authorize_callback_path)
+            httprequest.url_root, self._authorize_callback_path)
         if not provider._btcpay_wizard_state_verify(redirect_uri, state):
             _logger.warning(
                 'BTCPay: wizard callback state verification failed (provider %s)',
