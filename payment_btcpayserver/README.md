@@ -12,18 +12,19 @@ Branches `16.0` and `17.0` are end-of-life and no longer maintained.
 :::
 
 :::warning
-**Upgrading from module version 1.x (pairing-code setup)?** Version 2.0
-switches to the BTCPay Greenfield API. The old pairing/token credentials are
-not compatible — reconnect the provider once after updating (see
+**Upgrading from module version v20.0.1.x (pairing-code setup)?** Versions
+v20.0.2.0 and later switch to the BTCPay Greenfield API. The old
+pairing/token credentials are not compatible — reconnect the provider once
+after updating (see
 [Upgrading from the legacy pairing setup](#upgrading-from-the-legacy-pairing-setup)).
 Existing transactions keep working; the module can still read invoices
 created before the switch.
 
 Version guidance by release:
-* **v20.0.1.0** ([release](https://github.com/btcpayserver/odoo/releases/tag/v20.0.1.0))
+* **v20.0.1.x** ([v20.0.1.0 release](https://github.com/btcpayserver/odoo/releases/tag/v20.0.1.0))
   still uses the **legacy BitPay API** with pairing codes — same setup as
-  Odoo 18/19, no reconnect needed after upgrading from v1.x.
-* **v20.0.2.0+** requires the new **Greenfield setup** (this document).
+  Odoo 18/19, no reconnect needed after upgrading from older releases.
+* **v20.0.2.x** requires the new **Greenfield setup** (this document).
 :::
 
 ## Install the module
@@ -117,13 +118,14 @@ Congrats, all done. Do some testing to be sure all works.
 
 ## Upgrading from the legacy pairing setup
 
-Module version 2.0 replaces the legacy BitPay API (pairing codes, private
-key, token) with the BTCPay **Greenfield API**. This is a **breaking
-change**: old pairing credentials cannot be migrated — reconnect the
-provider once:
+Module versions v20.0.2.0 and later replace the legacy BitPay API (pairing
+codes, private key, token) with the BTCPay **Greenfield API**. This is a
+**breaking change**: old pairing credentials cannot be migrated — reconnect
+the provider once:
 
-1. Update the module to v2.0 (Apps -> search "btcpay" -> Upgrade). The
-   provider form resets to the wizard flow; the old pairing fields are gone.
+1. Update the module to v20.0.2.0 or later (Apps -> search "btcpay" ->
+   Upgrade). The provider form resets to the wizard flow; the old pairing
+   fields are gone.
 2. Follow [Setup wizard](#setup-wizard-recommended) above (or the manual
    setup) to create an API key and reconnect your store.
 3. The webhook is registered automatically during the wizard.
