@@ -7,14 +7,60 @@
         <field name="inherit_id" ref="payment.payment_provider_form"/>
         <field name="arch" type="xml">
             <group name="provider_credentials" position='inside'>
-                <group invisible="code != 'btcpayserver'">
+                <group colspan="2" col="2" class="btcpay_provider_config"
+                       invisible="code != 'btcpayserver'"
+                       string="BTCPay Server (Greenfield API)">
                     <field name="btcpay_location"/>
-                    <field name="btcpay_pairingCode"/>
+                    <field name="btcpay_show_manual" invisible="btcpay_store_id or btcpay_api_key"/>
+                    <field name="btcpay_store_id"
+                           invisible="not btcpay_show_manual and not btcpay_store_id"/>
+                    <field name="btcpay_api_key" password="True"
+                           invisible="not btcpay_show_manual and not btcpay_store_id and not btcpay_api_key"/>
+                    <div colspan="2">
+                        <button name="action_btcpay_open_authorize" type="object"
+                                string="Connect BTCPay Server" icon="open_in_new"
+                                class="btn-primary"
+                                help="Opens BTCPay in a new tab to authorize Odoo on one of your stores. Returns automatically and completes the setup."
+                                invisible="btcpay_show_manual or not btcpay_location"/>
+                        <button name="action_btcpay_test_connection" type="object"
+                                string="Test Connection" icon="check_circle"
+                                class="btn-secondary"
+                                invisible="not btcpay_store_id or not btcpay_api_key"/>
+                        <button name="action_btcpay_reregister_webhook" type="object"
+                                string="Re-register Webhook" icon="refresh"
+                                class="btn-secondary"
+                                invisible="not btcpay_store_id or not btcpay_api_key"/>
+                        <button name="action_btcpay_disconnect" type="object"
+                                string="Disconnect" icon="link_off"
+                                class="btn-secondary o_btcpay_disconnect"
+                                confirm="This deletes the webhook on the BTCPay store (if possible) and clears all stored credentials. Continue?"
+                                invisible="not btcpay_store_id and not btcpay_api_key"/>
+                    </div>
+                    <div colspan="2" class="o_row" invisible="not btcpay_webhook_url">
+                        <span class="o_form_label">Webhook Endpoint</span>
+                        <field name="btcpay_webhook_url" nolabel="1" readonly="1"/>
+                    </div>
+                    <field name="btcpay_webhook_id"
+                           invisible="not btcpay_store_id or not btcpay_api_key"/>
+                    <field name="btcpay_webhook_secret" password="True"
+                           invisible="not btcpay_store_id or not btcpay_api_key"/>
+                    <div colspan="2" class="o_row" invisible="not btcpay_store_name">
+                        <span class="o_form_label">BTCPay Store Name</span>
+                        <field name="btcpay_store_name" nolabel="1" readonly="1"/>
+                    </div>
+                    <div colspan="2" class="o_row" invisible="not btcpay_connection_status">
+                        <span class="o_form_label">Connection Status</span>
+                        <field name="btcpay_connection_status" nolabel="1" readonly="1"/>
+                    </div>
+                    <div colspan="2" class="o_row" invisible="not btcpay_webhook_status">
+                        <span class="o_form_label">Webhook Status</span>
+                        <field name="btcpay_webhook_status" nolabel="1" readonly="1"/>
+                    </div>
+                    <field name="btcpay_authorize_url" invisible="1"/>
                 </group>
-                <group invisible="code != 'btcpayserver'">
-                    <field name="btcpay_token"/>
-                    <field name="btcpay_privateKey"/>
-                    <field name="btcpay_facade"/>
+                <group string="BTCPay Refunds" name="btcpay_refunds"
+                       colspan="2" invisible="code != 'btcpayserver'">
+                    <field name="btcpay_refund_variant" colspan="2"/>
                 </group>
             </group>
         </field>

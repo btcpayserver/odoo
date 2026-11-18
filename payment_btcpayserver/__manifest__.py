@@ -5,10 +5,10 @@
 #
 #******************************************************************************
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of
-# the License, or any later version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -25,7 +25,7 @@
     'author': 'BTCPay Server team and contributors',
     'website': 'https://github.com/btcpayserver/odoo',
     'category': 'Accounting/Payment Providers',
-    'version': '20.0.1.0',
+    'version': '20.0.2.0',
     'license': 'GPL-3',
     'currency': 'USD',
     'application': False,
@@ -39,11 +39,12 @@
         'data/payment_provider_data.xml',
     ],
     'images':  ['static/description/BTCPay-Odoo-17-featured.png'],
-    # The BTCPay client (legacy BitPay API) is vendored in models/libs and
-    # only requires 'ecdsa' (plus 'requests', shipped with Odoo).
-    'external_dependencies': {
-        'python': ['ecdsa']
+    'assets': {
+        'web.assets_backend': [
+            'payment_btcpayserver/static/src/scss/provider_form.scss',
+        ],
     },
+    # The Greenfield client only needs 'requests', which ships with Odoo.
     'post_init_hook': 'post_init_hook',
     'uninstall_hook': 'uninstall_hook',
 }

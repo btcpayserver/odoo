@@ -1,0 +1,13 @@
+# Python bytecode caches
+__pycache__/
+*.py[cod]
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# local-only docs & secrets
+MIGRATION-GREENFIELD.md
+odoo_pg_pass
+credentials.txt
