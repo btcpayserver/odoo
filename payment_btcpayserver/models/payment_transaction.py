@@ -14,7 +14,10 @@ class PaymentTransaction(models.Model):
     _inherit = 'payment.transaction'
 
     btcpay_invoiceId = fields.Char("Invoice Id")
-    btcpay_txid = fields.Char("Transaction Id")
+    btcpay_txid = fields.Char(
+        "BTCPay Reference",
+        help="Currently holds the checkout link of the BTCPay invoice, "
+             "not an on-chain transaction id.")
     btcpay_status = fields.Char("Transaction Status")
     btcpay_refund_link = fields.Char(
         string="Refund Claim Link", copy=False,

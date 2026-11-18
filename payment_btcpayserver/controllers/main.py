@@ -29,7 +29,7 @@ from odoo.exceptions import ValidationError
 from odoo.http import request
 
 from odoo.addons.payment.logging import get_payment_logger
-from ..models.libs.greenfield_client import GreenfieldClient
+from ..models.libs.greenfield_client import GreenfieldClient, GreenfieldError
 
 
 _logger = get_payment_logger(__name__)
@@ -124,6 +124,7 @@ class BTCPayController(http.Controller):
         )
         tx_sudo.invalidate_recordset([
             'state', 'btcpay_invoiceId', 'provider_reference',
+            'state_message', 'btcpay_refund_link',
         ])
 
     @staticmethod
@@ -274,7 +275,14 @@ class BTCPayController(http.Controller):
         # stored before the lock is released, so late notifications for the old
         # invoice can no longer select this transaction.
         if tx_sudo.btcpay_invoiceId:
-            existing_invoice = client.get_invoice(tx_sudo.btcpay_invoiceId)
+            try:
+                existing_invoice = client.get_invoice(tx_sudo.btcpay_invoiceId)
+            except GreenfieldError as error:
+                # BTCPay unreachable/erroring: a raw 500 here would hit the
+                # buyer. Convert to a controlled, customer-safe error.
+                raise ValidationError(_(
+                    "BTCPay: The stored invoice could not be retrieved. "
+                    "Please try again shortly. (%s)", error))
             self._validate_existing_invoice(
                 tx_sudo, tx_sudo.btcpay_invoiceId, existing_invoice,
             )
@@ -293,15 +301,22 @@ class BTCPayController(http.Controller):
                 )
                 return request.redirect(existing_invoice['checkoutLink'], local=False)
 
-        invoice = client.create_invoice(
-            amount=tx_sudo.amount,
-            currency=tx_sudo.currency_id.name,
-            metadata={'orderId': tx_sudo.reference},
-            checkout={
-                'redirectURL': urls.url_join(base_url, self._return_url),
-                'redirectAutomatically': True,
-            },
-        )
+        try:
+            invoice = client.create_invoice(
+                amount=tx_sudo.amount,
+                currency=tx_sudo.currency_id.name,
+                metadata={'orderId': tx_sudo.reference},
+                checkout={
+                    'redirectURL': urls.url_join(base_url, self._return_url),
+                    'redirectAutomatically': True,
+                },
+            )
+        except GreenfieldError as error:
+            # Same as above: keep BTCPay outages away from the buyer as a
+            # controlled error instead of a raw 500 page.
+            raise ValidationError(_(
+                "BTCPay: The payment invoice could not be created. Please "
+                "try again shortly. (%s)", error))
         self._validate_created_invoice(tx_sudo, invoice)
         # Since Odoo 20.0, payment.transaction.write() requires the
         # payment_safe_write context flag. Storing the freshly created invoice
@@ -527,10 +542,13 @@ class BTCPayController(http.Controller):
             return _btcpay_wizard_result_page(False, _(
                 'The authorization refers to an unknown payment provider. Please '
                 'start the setup wizard again from the payment provider settings.'), None)
-        # The state was signed over "<id>|<ts>|<callback base>"; the base is
-        # the same URL the callback arrives on (scheme/host from the request).
+        # The state was signed over "<id>|<ts>|<callback base>"; the base must
+        # be identical on both sides, so it is derived from web.base.url via
+        # get_base_url() — NOT from the incoming request: behind a reverse
+        # proxy or with a differing host the request-derived base would
+        # reject legitimate callbacks (fail-closed, but breaks the wizard).
         redirect_uri = urls.url_join(
-            httprequest.url_root, self._authorize_callback_path)
+            provider.get_base_url(), self._authorize_callback_path)
         if not provider._btcpay_wizard_state_verify(redirect_uri, state):
             _logger.warning(
                 'BTCPay: wizard callback state verification failed (provider %s)',

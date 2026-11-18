@@ -398,8 +398,7 @@ class PaymentProvider(models.Model):
         except GreenfieldError as error:
             self._btcpay_update_status(connection=f'❌ {error}', store_name=store.get('name'))
             raise UserError(_('BTCPay connection test failed: %s', error))
-        granted = key_info.get('permissions') or []
-        ok, missing, warnings = client.check_permissions(self.btcpay_store_id)
+        _ok, missing, warnings = client.check_permissions(self.btcpay_store_id)
         if missing:
             message = _(
                 'The API key is missing permissions: %s. Create a new key with '

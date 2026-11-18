@@ -227,5 +227,5 @@ class GreenfieldClient:
             missing.append(permission)
 
         if not granted:
-            missing.extend(required)
+            missing.extend(p for p in required if p not in missing)
         return (not missing), missing, warnings

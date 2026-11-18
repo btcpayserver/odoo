@@ -135,14 +135,15 @@ Notes:
 
 * **Payments on invoices created before the switch:** the old legacy IPN
   endpoint no longer exists in v20.0.2.x, so BTCPay's legacy notifications
-  for those invoices will fail. As long as the customer stays on the
-  BTCPay checkout page, the redirect back to Odoo still resolves the
-  payment (the module fetches the invoice through the Greenfield API and
-  processes it). Payments that settle *after* the customer left the page
-  are only picked up once the new Greenfield webhook is registered (which
-  happens automatically during the wizard) — BTCPay redelivers pending
-  webhook events for a while, but to be safe check open transactions after
-  upgrading.
+  for those invoices will fail. The redirect back to Odoo does **not**
+  process anything by itself — payment data is only recorded by the
+  Greenfield webhook. In-flight invoices therefore settle in Odoo only
+  once the new webhook is registered (which happens automatically during
+  the wizard): BTCPay redelivers pending webhook events for a while, and
+  such a delivery is then fetched through the API, verified and
+  processed. To be safe, check open transactions after upgrading and use
+  the "Redeliver" action on the BTCPay webhook for transactions that did
+  not resolve.
 * **Manual connections need a click too**: if you connected the provider
   with the old pairing flow, the credentials are discarded on upgrade — run
   the wizard again.
@@ -200,6 +201,12 @@ without redirects (a http→https redirect makes webhook clients re-send as GET,
 is rejected) and without changing the request body. Check "Webhook Status" on the
 provider form, use "Test Connection", and re-deliver events from the BTCPay invoice
 page ("Redeliver" link) while watching the Odoo log for `BTCPay: webhook` lines.
+
+The webhook and checkout redirect URLs are built from Odoo's `web.base.url`
+(see the "Webhook Endpoint" line on the provider form). If that parameter
+still holds an internal address (common in docker setups), BTCPay calls an
+unreachable URL and payments never confirm — set `web.base.url` to the
+public Odoo address and re-run "Test Connection".
 
 ### Login page appears after the BTCPay authorization
 That is expected: the session cookie is not sent across the cross-site
