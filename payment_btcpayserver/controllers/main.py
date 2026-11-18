@@ -560,11 +560,13 @@ class BTCPayController(http.Controller):
             return _btcpay_wizard_result_page(False, _(
                 'The authorization refers to an unknown payment provider. Please '
                 'start the setup wizard again from the payment provider settings.'), None)
-        # The state was signed over "<id>|<ts>|<callback base>"; the base must
-        # be identical on both sides, so it is derived from web.base.url via
-        # get_base_url() — NOT from the incoming request: behind a reverse
-        # proxy or with a differing host the request-derived base would
-        # reject legitimate callbacks (fail-closed, but breaks the wizard).
+        # The state was signed over "<id>|<ts>|<callback base>|<write_date>";
+        # the callback base must be identical on both sides, so it is derived
+        # from web.base.url via get_base_url() — NOT from the incoming
+        # request: behind a reverse proxy or with a differing host the
+        # request-derived base would reject legitimate callbacks (fail-closed,
+        # but breaks the wizard). The write_date binding makes the state
+        # single-use: applying credentials invalidates the token at once.
         redirect_uri = urls.url_join(
             provider.get_base_url(), self._authorize_callback_path)
         if not provider._btcpay_wizard_state_verify(redirect_uri, state):

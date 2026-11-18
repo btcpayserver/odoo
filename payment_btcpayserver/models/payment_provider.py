@@ -146,22 +146,32 @@ class PaymentProvider(models.Model):
         """Build the signed wizard state for this provider.
 
         Format: ``<unix-ts>.<hex hmac>`` where the HMAC covers
-        ``<id>|<ts>|<callback base url>``. The timestamp lets the callback
-        reject stale states (the state travels in the redirect URL and could
-        leak via referrers; a captured state must only be usable for a short
-        window around the wizard run).
+        ``<id>|<ts>|<callback base>|<write_date>``. The timestamp lets the
+        callback reject stale states (the state travels in the redirect URL
+        and could leak via referrers; a captured state must only be usable
+        for a short window around the wizard run). The ``write_date`` makes
+        the state **single-use**: applying credentials writes the provider,
+        which moves ``write_date`` and invalidates the state immediately —
+        a captured or replayed state is worthless after the first
+        successful callback (or after any unrelated save of the provider).
         """
         self.ensure_one()
         secret = self.env['ir.config_parameter'].sudo().get_str('database.secret')
         ts = int(time.time())
-        payload = f'{self.id}|{ts}|{callback_base}'
+        payload = f'{self.id}|{ts}|{callback_base}|{self.write_date or ""}'
         signature = hmac.new(
             secret.encode('utf-8'), payload.encode('utf-8'), hashlib.sha256,
         ).hexdigest()
         return f'{ts}.{signature}'
 
     def _btcpay_wizard_state_verify(self, callback_base, state, max_age=900):
-        """Verify a wizard state token (format ``<ts>.<hmac>``, max_age seconds)."""
+        """Verify a wizard state token (format ``<ts>.<hex hmac>``).
+
+        Rejects stale states (older than ``max_age`` seconds) and states
+        signed for a previous provider state: the HMAC covers the
+        provider's ``write_date``, so once credentials are applied (or the
+        provider saved at all) the token no longer verifies.
+        """
         self.ensure_one()
         if not state or '.' not in state:
             return False
@@ -172,7 +182,7 @@ class PaymentProvider(models.Model):
         if abs(int(time.time()) - ts) > max_age:
             return False
         secret = self.env['ir.config_parameter'].sudo().get_str('database.secret')
-        payload = f'{self.id}|{ts}|{callback_base}'
+        payload = f'{self.id}|{ts}|{callback_base}|{self.write_date or ""}'
         expected = hmac.new(
             secret.encode('utf-8'), payload.encode('utf-8'), hashlib.sha256,
         ).hexdigest()
