@@ -194,6 +194,41 @@ class PaymentTransaction(models.Model):
             raise ValidationError(_(
                 "BTCPay: The original transaction has no BTCPay invoice to refund."))
 
+        # Duplicate/overlapping refund guard: Odoo's refund action only
+        # checks that the source transaction is done, so a double submission
+        # would create a second pull payment (and a second claim link) on
+        # the same invoice. Refuse while refund transactions that are still
+        # draft/pending or already done cover the requested amount.
+        # Canceled or failed refunds do not block a retry, and BTCPay
+        # remains the final authority on the refundable amount.
+        #
+        # Serialize on the source transaction first: without the lock, two
+        # concurrent submissions could both pass the amount check before
+        # either commits (check-then-act race). The lock is held until the
+        # database transaction ends, so the loser re-reads the winner's
+        # refund and is refused. Same pattern as the controller's
+        # `_lock_transaction` on the checkout/webhook path.
+        self.env.cr.execute(
+            "SELECT id FROM payment_transaction WHERE id = %s FOR UPDATE",
+            [source_tx.id],
+        )
+        existing_refunds = self.search([
+            ('source_transaction_id', '=', source_tx.id),
+            ('operation', '=', 'refund'),
+            ('state', 'in', ('draft', 'pending', 'done')),
+            ('id', '!=', self.id),
+        ])
+        already_refunded = -sum(existing_refunds.mapped('amount'))
+        currency = source_tx.currency_id
+        remaining = source_tx.amount - already_refunded
+        if (currency.compare_amounts(remaining, 0.0) <= 0
+                or currency.compare_amounts(-self.amount, remaining) > 0):
+            raise ValidationError(_(
+                "BTCPay: The refund cannot be created: only %s %s remain "
+                "refundable on this transaction (other refunds are already "
+                "pending or completed).",
+                remaining, currency.name))
+
         # A refund transaction has a negative amount; refunds of the full
         # paid amount use the configured variant, partial refunds a custom
         # amount in the transaction currency.

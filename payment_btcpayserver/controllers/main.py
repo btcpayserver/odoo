@@ -5,10 +5,10 @@
 #
 # ******************************************************************************
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of
-# the License, or any later version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -271,22 +271,32 @@ class BTCPayController(http.Controller):
         client = provider._btcpay_client()
 
         # A browser retry must not create a second payable invoice. Reuse the
-        # stored invoice while it remains payable. If it expired, the new ID is
-        # stored before the lock is released, so late notifications for the old
-        # invoice can no longer select this transaction.
+        # stored invoice while it remains payable. If it expired or became
+        # invalid (e.g. double-spend), the new ID is stored before the lock
+        # is released, so late notifications for the old invoice can no
+        # longer select this transaction.
         if tx_sudo.btcpay_invoiceId:
             try:
                 existing_invoice = client.get_invoice(tx_sudo.btcpay_invoiceId)
             except GreenfieldError as error:
                 # BTCPay unreachable/erroring: a raw 500 here would hit the
-                # buyer. Convert to a controlled, customer-safe error.
+                # buyer. Convert to a controlled, customer-safe error. The
+                # detail (host, endpoint, API message) is logged for the
+                # operator but never shown to the buyer.
+                _logger.warning(
+                    "BTCPay: fetching stored invoice %s for transaction %s "
+                    "failed: %s",
+                    tx_sudo.btcpay_invoiceId, tx_sudo.reference, error)
                 raise ValidationError(_(
                     "BTCPay: The stored invoice could not be retrieved. "
-                    "Please try again shortly. (%s)", error))
+                    "Please try again shortly."))
             self._validate_existing_invoice(
                 tx_sudo, tx_sudo.btcpay_invoiceId, existing_invoice,
             )
-            if existing_invoice['status'].lower() != 'expired':
+            # 'invalid' invoices are dead (double-spend / network conflict):
+            # like expired ones they must be replaced, not reused, or the
+            # buyer would be sent to a dead checkout page.
+            if existing_invoice['status'].lower() not in ('expired', 'invalid'):
                 self._validate_invoice_amount(tx_sudo, existing_invoice)
                 if (
                     not isinstance(existing_invoice.get('checkoutLink'), str)
@@ -313,10 +323,14 @@ class BTCPayController(http.Controller):
             )
         except GreenfieldError as error:
             # Same as above: keep BTCPay outages away from the buyer as a
-            # controlled error instead of a raw 500 page.
+            # controlled error instead of a raw 500 page. Log the detail,
+            # show the buyer a generic message only.
+            _logger.warning(
+                "BTCPay: creating invoice for transaction %s failed: %s",
+                tx_sudo.reference, error)
             raise ValidationError(_(
                 "BTCPay: The payment invoice could not be created. Please "
-                "try again shortly. (%s)", error))
+                "try again shortly."))
         self._validate_created_invoice(tx_sudo, invoice)
         # Since Odoo 20.0, payment.transaction.write() requires the
         # payment_safe_write context flag. Storing the freshly created invoice
@@ -521,11 +535,15 @@ class BTCPayController(http.Controller):
         the previous configuration is untouched.
         """
         httprequest = request.httprequest
-        api_key = post.get('apiKey') or httprequest.args.get('apiKey')
+        # Credentials travel only in the POST body of the form BTCPay
+        # submits; never accept them from the query string - a key in the
+        # URL would end up in web-server and proxy access logs. NOTE: Odoo
+        # merges the query string into the controller's **post kwargs
+        # (http.get_http_params()), so post.get('apiKey') would still read
+        # the URL - only httprequest.form is guaranteed body-only.
+        api_key = httprequest.form.get('apiKey')
         permissions = (httprequest.form.getlist('permissions[]')
-                       or httprequest.args.getlist('permissions[]')
-                       or httprequest.form.getlist('permissions')
-                       or httprequest.args.getlist('permissions'))
+                       or httprequest.form.getlist('permissions'))
         provider_id = httprequest.args.get('provider', type=int)
         state = httprequest.args.get('state')
 
