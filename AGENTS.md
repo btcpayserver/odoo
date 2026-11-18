@@ -1,6 +1,7 @@
 # AGENTS.md — Guidance for Coding Agents
 
-Scope: this repository (`ndeet/btcpay-odoo-modules`), module `payment_btcpayserver`.
+Scope: this repository (**`btcpayserver/odoo`** — upstream; Andy's fork
+`ndeet/btcpay-odoo-modules` only holds branches), module `payment_btcpayserver`.
 Read this before changing anything. The security invariants in particular are
 not suggestions — several exist because of real payment-integrity requirements.
 
@@ -13,8 +14,9 @@ not suggestions — several exist because of real payment-integrity requirements
     there** — deliberately frozen (see MIGRATION-GREENFIELD.md).
   - `odoo-20-greenfield` — active development: Greenfield API, setup wizard,
     refunds. Feature branches fork from here.
-- Remotes: `ndeet` = Andy's fork (SSH). Push only on request. Tags/releases only
-  on explicit instruction (see "Release discipline").
+- Remotes: `origin` = upstream `btcpayserver/odoo` (PRs go **here**),
+  `ndeet` = Andy's fork (branch holder, SSH). Push to upstream only on
+  request. Tags/releases only on explicit instruction (see "Release discipline").
 - Planning/audit docs (`MIGRATION-GREENFIELD.md`, `SECURITY_REPORT.md`) stay
   **untracked** by default — never commit them without asking.
 
